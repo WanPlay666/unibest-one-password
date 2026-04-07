@@ -18,7 +18,6 @@ definePage({
 })
 
 onShow(() => {
-  console.log('测试 uni API 自动引入:index  onLoad')
   fetchCategoryCounts()
 })
 
@@ -35,32 +34,33 @@ const categoryList = ref([
   { id: 9, title: '软件授权', count: 0, icon: 'i-carbon-code', color: 'bg-slate-500' },
 ])
 
-// 2. 动态计算每个分类的数量
 function fetchCategoryCounts() {
-  console.log('---fetchCategoryCounts---')
+  console.log('fetchCategoryCounts')
+
+  // 【最关键的修复】如果没有密钥（应用未解锁或刷新丢失），重置数量并直接拦截
+  if (!authStore.memoryAESKey) {
+    console.warn('首页检测到未解锁，拦截解密操作')
+    categoryList.value = categoryList.value.map(c => ({ ...c, count: 0 }))
+    return
+  }
+
   try {
-    // 1. 去安全模块取数获取真实内容
     const allRecords = getSecureStorage('ENCRYPTED_VAULT') || []
-    console.log('---ENCRYPTED_VAULT---', allRecords)
-    // 2. [核心修复1]：不要直接改原数组，克隆出一个全新的数组重置 count
-    // 这样重新赋值时，Vue 才能 100% 监听到数据变化并刷新页面
+
+    // 克隆数组重置 count
     const newList = categoryList.value.map(category => ({
       ...category,
       count: 0,
     }))
 
-    // 3. 遍历所有记录，累加 count
+    // 统计逻辑
     allRecords.forEach((record: any) => {
-      // [核心修复2]：务必将两边的 id 都转成 String 再对比！
-      // 因为路由传过来的 categoryId 是字符串 '3'，而你定义的 id 是数字 3
       const matchedCategory = newList.find(c => String(c.id) === String(record.categoryId))
-
       if (matchedCategory) {
         matchedCategory.count += 1
       }
     })
 
-    // 4. 将全新数组赋值回去，强制触发视图的渲染
     categoryList.value = newList
   }
   catch (error) {

@@ -19,7 +19,8 @@ onShow((options) => {
   // ==========================================
 
   // 强行注入测试密钥，保证 setSecureStorage 依然能正常加密！
-  authStore.setAESKey('TEST_DEV_KEY_1234567890')
+  //  32 位
+  authStore.setAESKey('TEST_DEV_KEY_1234567890_12345678')
 
   // 清除计时器印记
   removeStorage('LAST_HIDE_TIME')
