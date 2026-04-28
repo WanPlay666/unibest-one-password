@@ -91,7 +91,6 @@ function handleAction(item: MenuItem) {
         </view>
       </view>
       <text class="mt-6 text-2xl text-white font-bold tracking-tight">Alex Doe</text>
-      <text class="mt-1 text-sm text-[#555555] font-medium">前端工程师</text>
     </view>
 
     <view

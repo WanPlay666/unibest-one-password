@@ -39,7 +39,7 @@ defineExpose({
 </script>
 
 <template>
-  <view class="fixed inset-0 h-100vh flex flex-col overflow-hidden overscroll-y-none bg-[#0a0a0a]">
+  <view class="fixed inset-0 h-100vh flex flex-col overflow-hidden overscroll-y-none bg-[#050508]">
     <view class="body-content relative min-h-0 flex-1 overflow-hidden">
       <scroll-view scroll-y class="h-full w-full" :enhanced="true" :bounces="false" :show-scrollbar="false">
         <KuRootView />

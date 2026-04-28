@@ -1,208 +1,152 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { ref, watch } from 'vue'
+import { provide, reactive, ref } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
 import RecordNameCard from '@/components/addCategory/RecordNameCard.vue'
 import RelatedAppsCard from '@/components/addCategory/RelatedAppsCard.vue'
 import Header from '@/components/Header.vue'
-// 1. [新增] 引入权限 Store，用于获取和补充 AES 密钥
-import { useAuthStore } from '@/store/auth'
-import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
 
-definePage({
-  style: { navigationStyle: 'custom' },
-})
+import { useFormEngine } from '@/composables/useFormEngine'
+import { useFormValidation } from '@/composables/useFormValidation'
+import { useRelatedItems } from '@/composables/useRelatedItems'
+// 导入核心 Composables
+import { useVaultStore } from '@/composables/useVaultStore'
 
-const authStore = useAuthStore() // [新增] 初始化 Store
-
-const title = ref('添加银行卡')
-const inputTitle = ref('') // 记录名称，如：招商工资卡
-const categoryIcon = ref('i-carbon-wallet') // 默认银行图标
-const categoryId = ref<string | number>('3')
-const bgColor = ref('bg-emerald-500')
-
-const formData = ref({
-  cardType: '',
+// 1. 初始化引擎与状态
+// 定义银行卡页面的字段契约
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
   bankName: '',
-  cardNumber: '',
+  cardType: '',
+  cardNumber: '', // 引擎会自动从 account 或 rawData.cardNumber 回显
   holderName: '',
   phone: '',
   cvv: '',
-  password: '',
-  bindStatus: '',
+  remark: '',
 })
 
-const relatedApps = ref<string[]>([])
-const isSaving = ref(false)
+const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
+const { saveRecord } = useVaultStore()
+const { validateBase } = useFormValidation()
 
-const cardTypeOptions = ['借记卡 (储蓄卡)', '信用卡']
+// 页面基础 UI 状态
+const title = ref('添加银行卡')
+const inputTitle = ref('')
+const categoryIcon = ref('i-carbon-credit-card')
+const categoryId = ref('3')
 
+// --- 2. 表单注册中心 ---
+const fieldRegistry = reactive(new Map<string, any>())
+provide('formManager', {
+  register: (name, meta) => fieldRegistry.set(name, meta),
+  update: (name, meta) => fieldRegistry.set(name, meta),
+  unregister: name => fieldRegistry.delete(name),
+})
+
+// --- 3. 生命周期与数据初始化 ---
 onLoad((options: any) => {
-  if (options && options.title) {
-    title.value = options.title
-    if (options.icon)
-      categoryIcon.value = options.icon
-    if (options.id)
-      categoryId.value = options.id
-    if (options.color)
-      bgColor.value = options.color
+  init(options, (data) => {
+    // 引擎自动映射字段后，在此处理非通用字段
+    inputTitle.value = data.name
+    categoryId.value = String(data.categoryId)
+    if (data.relatedApps) {
+      setRelatedApps(data.relatedApps)
+    }
+  })
+
+  if (!isEditMode.value && options) {
+    title.value = options.title || '添加银行卡'
+    categoryIcon.value = options.icon || 'i-carbon-credit-card'
+    categoryId.value = options.id || '3'
   }
 })
+
+// --- 4. 业务逻辑 ---
+
+const cardTypeOptions = ['储蓄卡', '信用卡', '其它']
 
 function handleTypeChange(e: any) {
   formData.value.cardType = cardTypeOptions[e.detail.value]
 }
 
-watch(() => formData.value.cardNumber, (val) => {
-  const raw = val.replace(/\D/g, '')
-  const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ')
-  if (formatted !== val) {
-    formData.value.cardNumber = formatted
-  }
-})
+function validate(): boolean {
+  // A. 基础必填校验 (由注册中心自动完成)
+  if (!validateBase(fieldRegistry))
+    return false
 
-function isValidBankCard(cardNumber: string): boolean {
-  if (!cardNumber)
+  // B. 银行卡号特殊校验
+  if (formData.value.cardNumber && formData.value.cardNumber.length < 12) {
+    uni.showToast({ title: '银行卡号位数不足', icon: 'none' })
     return false
-  const numStr = cardNumber.replace(/\D/g, '')
-  if (numStr.length < 12 || numStr.length > 23)
-    return false
+  }
   return true
 }
 
-function handleBack() {
-  uni.navigateBack()
-}
-
-function handleSave() {
-  if (isSaving.value)
+async function handleSave() {
+  if (!validate())
     return
 
-  const safeBankName = formData.value.bankName.trim()
-  const safeHolderName = formData.value.holderName.trim()
-  const rawCardNumber = formData.value.cardNumber.replace(/\s/g, '')
+  // 关键：强制深拷贝当前相关应用状态，断开响应式引用干扰
+  const finalRelatedApps = JSON.parse(JSON.stringify(relatedApps.value))
 
-  // 2. [完善] 补全所有打上了 required 星号的必填校验
-  if (!safeBankName) {
-    uni.showToast({ title: '请输入银行名称', icon: 'none' })
-    return
+  const payload = {
+    id: isEditMode.value ? recordId.value : `${Date.now()}`,
+    categoryId: categoryId.value,
+    // 逻辑：优先用别名，否则用银行名+卡号后四位
+    name: inputTitle.value.trim() || `${formData.value.bankName} (${formData.value.cardNumber.slice(-4)})`,
+    account: formData.value.cardNumber,
+    password: '',
+    relatedApps: finalRelatedApps, // 根路径存储，解决编辑回显失效
+    rawData: getRawData(fieldRegistry, finalRelatedApps), // 供详情页展示
+    updatedAt: Date.now(),
   }
-  if (!formData.value.cardType) {
-    uni.showToast({ title: '请选择卡片类型', icon: 'none' })
-    return
-  }
-  if (!rawCardNumber) {
-    uni.showToast({ title: '请输入银行卡号', icon: 'none' })
-    return
-  }
-  if (!isValidBankCard(rawCardNumber)) {
-    uni.showToast({ title: '银行卡号格式不正确', icon: 'none' })
-    return
-  }
-  if (!safeHolderName) {
-    uni.showToast({ title: '请输入持卡人姓名', icon: 'none' })
-    return
-  }
-
-  isSaving.value = true
 
   try {
-    // 3. 🚧🚧🚧 [核心修复] 开发期热更新防掉线兜底机制 🚧🚧🚧
-    // 如果发现内存里没钥匙（说明刚刚热重载了），强行注入一把！
-    if (!authStore.memoryAESKey) {
-      console.warn('⚠️ 内存密钥丢失，已自动注入测试密钥')
-      authStore.setAESKey('TEST_DEV_KEY_1234567890')
-    }
-
-    const recordItem = {
-      id: `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      categoryId: categoryId.value,
-      name: inputTitle.value.trim() || safeBankName,
-      account: rawCardNumber,
-      password: formData.value.password.trim(),
-      icon: categoryIcon.value,
-      color: bgColor.value,
-      isStar: false,
-      relatedApps: relatedApps.value.map(app => app.trim()).filter(Boolean),
-      createdAt: Date.now(),
-      details: {
-        cardType: formData.value.cardType,
-        bankName: safeBankName,
-        holderName: safeHolderName,
-        phone: formData.value.phone.trim(),
-        cvv: formData.value.cvv.trim(),
-      },
-    }
-
-    const storageKey = 'ENCRYPTED_VAULT'
-    const list = getSecureStorage(storageKey) || []
-    list.unshift(recordItem)
-    setSecureStorage(storageKey, list)
-
-    uni.showToast({ title: '保存成功', icon: 'success' })
-    setTimeout(() => {
-      uni.navigateBack()
-    }, 800)
+    await saveRecord(payload, isEditMode.value, recordId.value)
+    uni.showToast({ title: '已安全保存', icon: 'success' })
+    setTimeout(() => uni.navigateBack(), 800)
   }
-  catch (error) {
-    console.error('保存银行卡失败', error)
-    // [补充] 加上 icon: 'none'，防止显示默认的成功图标打叉
-    uni.showToast({ title: '保存失败，请重试', icon: 'none' })
-  }
-  finally {
-    isSaving.value = false
+  catch (e) {
+    uni.showToast({ title: '保存失败', icon: 'none' })
   }
 }
 </script>
 
 <template>
-  <view class="box-border bg-[#050508] text-white pb-safe">
-    <view class="px-6">
-      <Header :title="title" fixed @back="handleBack" />
+  <view class="bg-[#050508] text-white">
+    <Header :title="isEditMode ? '编辑银行卡' : title" fixed @back="uni.navigateBack()" />
 
-      <view class="mt-6">
-        <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录别名 (如: 工资卡)" />
-      </view>
+    <view class="px-6 py-4">
+      <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录别名 (如: 招商工资卡)" />
 
-      <view class="mt-6">
-        <FieldGroup>
-          <FieldItem v-model="formData.bankName" required label="银行名称" placeholder="请输入银行名称 (如: 招商银行)" />
+      <FieldGroup>
+        <FieldItem v-model="formData.bankName" name="bankName" label="银行名称" required placeholder="如: 招商银行" />
 
-          <picker mode="selector" :range="cardTypeOptions" @change="handleTypeChange">
-            <FieldItem v-model="formData.cardType" label="卡片类型" required placeholder="请选择卡片类型" :show-arrow="true" />
-          </picker>
-
+        <picker mode="selector" :range="cardTypeOptions" @change="handleTypeChange">
           <FieldItem
-            v-model="formData.cardNumber" label="卡号" type="tel" required require-number :maxlength="23"
-            placeholder="XXXX XXXX XXXX XXXX"
+            v-model="formData.cardType" name="cardType" label="卡片类型" required readonly show-arrow
+            placeholder="请选择卡片类型"
           />
+        </picker>
 
-          <FieldItem v-model="formData.holderName" label="持卡人姓名" required placeholder="请输入持卡人姓名" :is-last="true" />
-        </FieldGroup>
-      </view>
+        <FieldItem
+          v-model="formData.cardNumber" name="cardNumber" label="卡号" type="tel" required
+          placeholder="请输入银行卡号"
+        />
 
-      <view class="mt-6">
-        <FieldGroup>
-          <FieldItem v-model="formData.phone" label="预留手机号" type="tel" require-number placeholder="请输入银行预留手机号" />
+        <FieldItem v-model="formData.holderName" name="holderName" label="持卡人" required is-last placeholder="请输入姓名" />
+      </FieldGroup>
 
-          <FieldItem v-model="formData.cvv" label="CVV2 / 有效期" no-chinese placeholder="信用卡专用 (如: 09/28 123)" />
+      <FieldGroup>
+        <FieldItem v-model="formData.phone" name="phone" label="预留手机" type="tel" placeholder="可选" />
+        <FieldItem v-model="formData.cvv" name="cvv" label="CVV / 有效期" placeholder="信用卡专用 (如: 123 / 09-28)" />
+        <FieldItem v-model="formData.remark" name="remark" label="备注说明" is-last placeholder="可选" />
+      </FieldGroup>
 
-          <FieldItem
-            v-model="formData.password" label="取款 / 查询密码" type="password" no-chinese placeholder="请输入独立密码"
-            :is-last="true"
-          />
-        </FieldGroup>
-      </view>
+      <RelatedAppsCard v-model="relatedApps" />
 
-      <view class="mt-6">
-        <RelatedAppsCard v-model="relatedApps" label="关联网址 / APP" placeholder="绑定网址/app名称" />
-      </view>
-
-      <view class="mt-6">
-        <BottomButton @save="handleSave" />
-      </view>
+      <BottomButton @save="handleSave" />
     </view>
   </view>
 </template>

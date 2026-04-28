@@ -35,8 +35,6 @@ const categoryList = ref([
 ])
 
 function fetchCategoryCounts() {
-  console.log('fetchCategoryCounts')
-
   // 【最关键的修复】如果没有密钥（应用未解锁或刷新丢失），重置数量并直接拦截
   if (!authStore.memoryAESKey) {
     console.warn('首页检测到未解锁，拦截解密操作')
@@ -107,9 +105,9 @@ function onManualLock() {
       <TopBar @add="handleAddCategory" @lock="onManualLock" />
     </view>
 
-    <view class="b-0 b-b-1 border-white/10 b-solid bg-[#000000f2] px-6 pb-6">
+    <!-- <view class="b-0 b-b-1 border-white/10 b-solid bg-[#000000f2] px-6 pb-6">
       <SearchBar @search="handleInput" />
-    </view>
+    </view> -->
 
     <view class="mt-6 px-6">
       <CategoryGrid :categories="categoryList" @click="handleCategoryClick" />

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
 import Header from '@/components/Header.vue'
+import { CATEGORY_MAP, CATEGORY_ROUTE_MAP } from '@/utils/config' // 引入配置
 import { safeAreaInsets } from '@/utils/systemInfo'
 
 definePage({
@@ -9,48 +9,21 @@ definePage({
   },
 })
 
-const categoryList = ref([
-  { id: 1, title: '基础登录', count: 0, icon: 'i-carbon-password', color: 'bg-blue-600' },
-  { id: 2, title: '身份信息', count: 0, icon: 'i-carbon-user', color: 'bg-indigo-500' },
-  { id: 3, title: '银行支付', count: 0, icon: 'i-carbon-wallet', color: 'bg-emerald-500' },
-  { id: 4, title: '社交通讯', count: 0, icon: 'i-carbon-chat', color: 'bg-sky-400' },
-  { id: 5, title: '车辆信息', count: 0, icon: 'i-carbon-car', color: 'bg-orange-500' },
-  { id: 6, title: '企业开票', count: 0, icon: 'i-carbon-receipt', color: 'bg-pink-400' },
-  { id: 7, title: '医疗社保', count: 0, icon: 'i-carbon-stethoscope', color: 'bg-red-500' },
-  { id: 8, title: 'Wi-Fi 网络', count: 0, icon: 'i-carbon-wifi', color: 'bg-violet-500' },
-  { id: 9, title: '软件授权', count: 0, icon: 'i-carbon-code', color: 'bg-slate-500' },
-])
-
 function handleClose() {
   uni.navigateBack()
 }
 
 function handleCategorySelect(item: any) {
-  console.log('---选择的分类：', item.title)
+  // 从统一配置中获取路径
+  const basePath = CATEGORY_ROUTE_MAP[String(item.id)]
 
-  // 根据分类 id 跳转到对应的专属页面
-  const routeMap: Record<number, string> = {
-    1: `/pages/accountPasswordAdd/accountPasswordAdd`, // 基础登录
-    2: `/pages/IdentityAdd/IdentityAdd`, // 身份信息
-    3: `/pages/BankAdd/BankAdd`, // 银行支付
-    4: `/pages/SocialAdd/SocialAdd`, // 社交通讯
-    5: `/pages/VehicleAdd/VehicleAdd`, // 车辆信息
-    6: `/pages/BusinessAdd/BusinessAdd`, // 企业开票
-    7: `/pages/HealthcareAdd/HealthcareAdd`, // 医疗社保
-    8: `/pages/WifiAdd/WifiAdd`, // Wi-Fi网络
-    9: `/pages/SoftwareAdd/SoftwareAdd`, // 软件授权
-  }
-
-  const basePath = routeMap[item.id]
   if (!basePath) {
-    uni.showToast({ title: '开发中', icon: 'none' })
+    uni.showToast({ title: '配置缺失', icon: 'none' })
     return
   }
 
-  const url = `${basePath}?id=${item.id}&title=${item.title}&icon=${item.icon}&color=${item.color}`
-
-  // 因为是在添加页面里面，应该直接用 navigateTo 跳转到表单详情，并保留该页在堆栈（或者 redirectTo）
-  // 这里正常 navigateTo 是可以的
+  // 拼接参数跳转
+  const url = `${basePath}?id=${item.id}&title=${item.title}`
   uni.navigateTo({ url })
 }
 </script>
@@ -61,7 +34,7 @@ function handleCategorySelect(item: any) {
 
     <view class="grid grid-cols-3 mt-10 content-start gap-x-4 gap-y-12 px-6">
       <view
-        v-for="item in categoryList" :key="item.title" class="flex flex-col items-center"
+        v-for="item in CATEGORY_MAP" :key="item.title" class="flex flex-col items-center"
         @click="handleCategorySelect(item)"
       >
         <view

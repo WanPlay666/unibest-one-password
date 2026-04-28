@@ -20,10 +20,10 @@ function handleLock() {
 </script>
 
 <template>
-  <view class="flex items-center justify-start pb-6" :style="{ paddingTop: `${safeAreaInsets.top}px` }">
+  <view class="flex items-center justify-start pb-2" :style="{ paddingTop: `${safeAreaInsets.top}px` }">
     <!-- 添加按钮 -->
     <view
-      class="mr-4 h-12 w-12 flex items-center justify-center b-1 border-white/10 rounded-full b-solid bg-blue-500 active:bg-blue-600"
+      class="mr-6 h-12 w-12 flex items-center justify-center b-1 border-white/10 rounded-full b-solid bg-blue-500 active:bg-blue-600"
       @tap="handleAdd"
     >
       <view class="i-carbon-add text-6 text-white" />

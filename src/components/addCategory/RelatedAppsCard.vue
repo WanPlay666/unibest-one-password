@@ -1,101 +1,141 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 
-// 使用 withDefaults 设置默认值
-const props = withDefaults(defineProps<{
-  modelValue: string[]
-  label?: string // [新增] 标题传值
-  placeholder?: string // [新增] 占位符传值
-}>(), {
-  label: '关联网址 / APP',
-  placeholder: '绑定网址/app名称',
-})
+interface RelatedItem {
+  id: string
+  value: string
+}
 
-const emit = defineEmits<{
-  'update:modelValue': [value: string[]]
+const props = defineProps<{
+  modelValue: RelatedItem[]
+  label?: string
+  placeholder?: string
 }>()
 
-// ... 其他逻辑保持不变 (pendingList, handleAdd 等) ...
-const pendingList = ref<string[]>([])
+const emit = defineEmits<{
+  'update:modelValue': [value: RelatedItem[]]
+}>()
 
-function handleAdd() {
-  pendingList.value.push('')
-}
+// 状态管理
+const isAdding = ref(false)
+const pendingValue = ref('')
+const editingId = ref<string | null>(null)
+const editingValue = ref('')
 
-function handleConfirm(index: number) {
-  const val = pendingList.value[index].trim()
+/**
+ * 核心逻辑：确认新增
+ * 只有在有值的情况下才触发 emit
+ */
+function handleConfirmNew() {
+  const val = pendingValue.value.trim()
   if (val) {
-    const newList = [...props.modelValue, val]
-    emit('update:modelValue', newList)
-    pendingList.value.splice(index, 1)
+    if (props.modelValue.some(i => i.value === val)) {
+      uni.showToast({ title: '内容重复', icon: 'none' })
+      return
+    }
+    const newItem = { id: `APP_${Date.now()}`, value: val }
+    emit('update:modelValue', [...props.modelValue, newItem])
   }
+  // 操作完成后直接关闭，不依赖聚焦状态
+  isAdding.value = false
+  pendingValue.value = ''
 }
 
-function handleCancelPending(index: number) {
-  pendingList.value.splice(index, 1)
+/**
+ * 核心逻辑：确认编辑
+ */
+function confirmEdit(id: string) {
+  const val = editingValue.value.trim()
+  if (val) {
+    const newList = props.modelValue.map(i => i.id === id ? { ...i, value: val } : i)
+    emit('update:modelValue', newList)
+  }
+  editingId.value = null
 }
 
-function handleRemoveSaved(index: number) {
-  const newList = [...props.modelValue]
-  newList.splice(index, 1)
-  emit('update:modelValue', newList)
+function handleRemove(id: string) {
+  emit('update:modelValue', props.modelValue.filter(i => i.id !== id))
+  if (editingId.value === id)
+    editingId.value = null
 }
 
-function handleInput(index: number, event: any) {
-  const val = event.detail.value
-  pendingList.value[index] = val.replace(/\s/g, '').slice(0, 100)
+/**
+ * 顶部按钮点击处理
+ */
+function handleHeaderBtnClick() {
+  if (isAdding.value) {
+    // 再次点击 X，相当于取消
+    isAdding.value = false
+    pendingValue.value = ''
+  }
+  else {
+    // 开启新增，同时关闭正在进行的编辑
+    editingId.value = null
+    isAdding.value = true
+  }
 }
 </script>
 
 <template>
-  <view class="min-h-[140px] flex flex-col border border-white/5 rounded-[24px] bg-[#1A1A1A] p-5 shadow-sm">
+  <view class="my-6 border border-white/5 rounded-[24px] bg-[#1A1A1A] p-5 shadow-sm">
     <view class="mb-4 flex items-center justify-between">
-      <text class="pl-1 text-[12px] text-gray-500 font-bold tracking-wider uppercase">
-        {{ label }}
-      </text>
+      <text class="text-[12px] text-gray-500 font-bold tracking-wider uppercase">{{ label || '关联网址 / APP' }}</text>
 
       <view
-        class="h-7 w-7 flex items-center justify-center rounded-full bg-[#000000] transition-all active:scale-95 active:bg-[#333]"
-        @click="handleAdd"
+        class="h-7 w-7 flex items-center justify-center rounded-full bg-black transition-transform active:scale-90"
+        @click="handleHeaderBtnClick"
       >
-        <view class="i-carbon-add text-[16px] text-blue-500" />
+        <view :class="isAdding ? 'i-carbon-close text-gray-400' : 'i-carbon-add text-blue-500'" class="text-[18px]" />
       </view>
     </view>
 
-    <view class="flex flex-1 flex-col gap-3">
+    <view class="flex flex-col gap-3">
       <view
-        v-for="(app, index) in modelValue" :key="`saved-${index}`"
-        class="flex items-center justify-between border border-white/5 rounded-2xl bg-[#1A1A1A]/60 px-4 py-3"
+        v-for="item in modelValue" :key="item.id"
+        class="min-h-[48px] flex items-center justify-between border border-white/5 rounded-2xl bg-[#1A1A1A]/60 px-4 py-2"
       >
-        <text class="truncate text-[14px] text-gray-300 font-mono">{{ app }}</text>
-        <view class="p-2 opacity-60 transition-opacity -mr-2 active:opacity-100" @click="handleRemoveSaved(index)">
-          <view class="i-carbon-trash-can text-[16px] text-gray-500 hover:text-red-400" />
-        </view>
-      </view>
+        <template v-if="editingId !== item.id">
+          <text class="flex-1 truncate text-sm text-gray-300 font-mono">{{ item.value }}</text>
+          <view class="ml-2 flex shrink-0 items-center">
+            <view
+              class="p-2 opacity-60 active:opacity-100"
+              @click="editingId = item.id; editingValue = item.value; isAdding = false"
+            >
+              <view class="i-carbon-edit text-[16px] text-gray-400" />
+            </view>
+            <view class="p-2 opacity-60 active:opacity-100" @click="handleRemove(item.id)">
+              <view class="i-carbon-trash-can text-[16px] text-gray-400" />
+            </view>
+          </view>
+        </template>
 
-      <view
-        v-for="(item, index) in pendingList" :key="`pending-${index}`"
-        class="flex animate-fade-in items-center justify-between border border-blue-500/30 rounded-2xl bg-[#080808] px-4 py-1"
-      >
-        <view class="flex flex-1 items-center gap-3">
+        <view v-else class="flex flex-1 items-center">
           <input
-            v-model="pendingList[index]" type="text" class="h-6 flex-1 bg-transparent text-[14px] text-white"
-            :placeholder="placeholder" placeholder-class="text-gray-600" :focus="true" :maxlength="100"
-            @input="handleInput(index, $event)" @confirm="handleConfirm(index)"
+            v-model="editingValue" class="h-6 flex-1 text-sm text-white" placeholder="输入新名称"
+            @confirm="confirmEdit(item.id)"
           >
-        </view>
-
-        <view class="p-2 -mr-2 active:opacity-70" @click="handleCancelPending(index)">
-          <view class="i-carbon-trash-can text-lg text-gray-600" />
+          <view class="p-2" @click="confirmEdit(item.id)">
+            <view class="i-carbon-checkmark text-[16px] text-green-500" />
+          </view>
         </view>
       </view>
 
       <view
-        v-if="modelValue.length === 0 && pendingList.length === 0"
-        class="flex flex-1 flex-col items-center justify-center py-6 opacity-40"
+        v-if="isAdding"
+        class="min-h-[48px] flex items-center border border-blue-500/30 rounded-2xl bg-[#080808] px-4"
       >
-        <view class="i-carbon-link mb-2 text-3xl" />
-        <text class="text-xs">暂无{{ label }}</text>
+        <input
+          v-model="pendingValue" :placeholder="placeholder || '输入网址或APP'" class="h-6 flex-1 text-sm text-white"
+          @confirm="handleConfirmNew"
+        >
+        <view class="p-2 active:opacity-50" @click="handleConfirmNew">
+          <view class="i-carbon-checkmark text-[16px] text-green-500" />
+        </view>
+      </view>
+
+      <view v-if="modelValue.length === 0 && !isAdding" class="flex flex-col items-center py-6 opacity-20">
+        <view class="i-carbon-link mb-1 text-3xl" />
+        <text class="text-[10px]">暂无关联项</text>
       </view>
     </view>
   </view>
