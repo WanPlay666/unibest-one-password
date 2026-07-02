@@ -80,15 +80,24 @@ defineExpose({ close })
 </script>
 
 <template>
-  <view class="w-full overflow-hidden bg-hex-121212">
+  <view
+    class="relative w-full overflow-hidden bg-hex-121212"
+    :class="{ 'z-20': isOpened }"
+  >
     <view
       class="flex flex-nowrap" :class="{ 'transition-transform duration-250 ease-out': !isDragging }" :style="{
         transform: `translateX(${offset}px)`,
         width: `calc(100% + ${maxOffset}px)`,
       }" @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd"
     >
-      <view class="flex-1 shrink-0 bg-hex-121212">
+      <view class="relative flex-1 shrink-0 bg-hex-121212">
         <slot />
+        <!-- 菜单打开时，遮罩层拦截点击，只关闭菜单不触发内容事件（不阻止页面滚动） -->
+        <view
+          v-if="isOpened"
+          class="absolute inset-0 z-10"
+          @click.stop="close"
+        />
       </view>
 
       <view class="flex shrink-0 items-stretch">

@@ -33,10 +33,7 @@ async function toggleFavorite(item: Item) {
   // 1. 直接修改引用属性，触发 UI 瞬时更新
   item.isFavorite = !item.isFavorite
 
-  // 2. 提供物理触感反馈
-  uni.vibrateShort({})
-
-  // 3. 业务逻辑提示
+  // 2. 业务逻辑提示
   uni.showToast({
     title: item.isFavorite ? '已加入收藏' : '已取消收藏',
     icon: 'none',
