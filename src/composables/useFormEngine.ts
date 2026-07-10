@@ -39,11 +39,16 @@ export function useFormEngine<T extends Record<string, any>>(initialState: T) {
       .filter(f => f.value)
       .map(f => ({ key: f.name, label: f.label, value: f.value }))
 
-    const apps = relatedApps
-      .filter(app => app.value)
-      .map((app, i) => ({ key: `app_${i}`, label: `关联应用 ${i + 1}`, value: app.value }))
+    const validApps = relatedApps.filter(app => app.value)
+    if (validApps.length) {
+      fields.push({
+        key: 'relatedApps',
+        label: '关联应用',
+        value: validApps.map(app => String(app.value)).join(', '),
+      })
+    }
 
-    return [...fields, ...apps]
+    return fields
   }
 
   return { formData, isEditMode, recordId, init, getRawData }

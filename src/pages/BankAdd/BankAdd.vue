@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { provide, reactive, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
@@ -13,18 +13,11 @@ import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 // 导入核心 Composables
 import { useVaultStore } from '@/composables/useVaultStore'
+import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 
-// 1. 初始化引擎与状态
-// 定义银行卡页面的字段契约
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  bankName: '',
-  cardType: '',
-  cardNumber: '', // 引擎会自动从 account 或 rawData.cardNumber 回显
-  holderName: '',
-  phone: '',
-  cvv: '',
-  remark: '',
-})
+// 1. 初始化引擎 - 字段清单从 Schema 派生
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('bank'))
 
 const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
 const { saveRecord } = useVaultStore()
@@ -33,8 +26,8 @@ const { validateBase } = useFormValidation()
 // 页面基础 UI 状态
 const title = ref('添加银行卡')
 const inputTitle = ref('')
-const categoryIcon = ref('i-carbon-credit-card')
 const categoryId = ref('3')
+const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['3'])
 
 // --- 2. 表单注册中心 ---
 const fieldRegistry = reactive(new Map<string, any>())
@@ -55,10 +48,8 @@ onLoad((options: any) => {
     }
   })
 
-  if (!isEditMode.value && options) {
-    title.value = options.title || '添加银行卡'
-    categoryIcon.value = options.icon || 'i-carbon-credit-card'
-    categoryId.value = options.id || '3'
+  if (!isEditMode.value && options?.id) {
+    categoryId.value = options.id
   }
 })
 
@@ -118,7 +109,7 @@ async function handleSave() {
     <Header :title="isEditMode ? '编辑银行卡' : title" fixed @back="uni.navigateBack()" />
 
     <view class="px-6 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录别名 (如: 招商工资卡)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 招商工资卡)" />
 
       <FieldGroup>
         <FieldItem v-model="formData.bankName" name="bankName" label="银行名称" required placeholder="如: 招商银行" />

@@ -141,7 +141,7 @@ function handleBack() {
         :entries="entries" :parse-result="parseResult" :new-count="newCount" :dup-count="dupCount"
         :invalid-count="invalidCount" />
 
-      <DuplicateHandler v-else-if="step === 3" :entries="entries" @set-all="bulkSetAction"
+      <DuplicateHandler v-else-if="step === 3" :entries="entries" :dup-count="dupCount" @set-all="bulkSetAction"
         @set-entry-action="setEntryAction" />
 
       <ImportComplete v-else-if="step === 4" :result="commitResult" @reset="handleReset" @finish="handleFinish" />

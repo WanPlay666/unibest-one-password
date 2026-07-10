@@ -80,10 +80,11 @@ export function useDataImport() {
   }
 
   function bulkSetAction(action: DupAction) {
-    entries.value = entries.value.map(e => ({
-      ...e,
-      dupAction: e.matchedLocalId ? action : 'keep-both',
-    }))
+    entries.value = entries.value.map((e) => {
+      if (!e.matchedLocalId)
+        return e
+      return { ...e, dupAction: action }
+    })
   }
 
   // ─── 步骤 4:入库 ─────────────────────────────────────

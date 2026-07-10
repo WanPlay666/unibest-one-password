@@ -79,7 +79,7 @@ function handleHeaderBtnClick() {
 <template>
   <view class="my-6 border border-white/5 rounded-[24px] bg-[#1A1A1A] p-5 shadow-sm">
     <view class="mb-4 flex items-center justify-between">
-      <text class="text-[12px] text-gray-500 font-bold tracking-wider uppercase">{{ label || '关联网址 / APP' }}</text>
+      <text class="text-[12px] text-gray-500 font-bold tracking-wider uppercase">{{ label || '关联信息' }}</text>
 
       <view
         class="h-7 w-7 flex items-center justify-center rounded-full bg-black transition-transform active:scale-90"

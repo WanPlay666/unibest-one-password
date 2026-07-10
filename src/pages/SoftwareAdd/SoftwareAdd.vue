@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { provide, reactive, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
@@ -13,13 +13,11 @@ import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 // 导入核心引擎
 import { useVaultStore } from '@/composables/useVaultStore'
+import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 
-// 1. 初始化引擎：定义软件授权字段契约
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  softwareName: '',
-  licenseKey: '',
-  limitation: '',
-})
+// 1. 初始化引擎 - 字段清单从 Schema 派生
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('software'))
 
 const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
 const { saveRecord } = useVaultStore()
@@ -36,8 +34,8 @@ provide('formManager', {
 // 3. 基础 UI 状态
 const title = ref('软件授权')
 const inputTitle = ref('')
-const categoryIcon = ref('i-carbon-code')
-const categoryId = ref('7')
+const categoryId = ref('9')
+const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['9'])
 
 onLoad((options: any) => {
   init(options, (data) => {
@@ -46,10 +44,8 @@ onLoad((options: any) => {
     setRelatedApps(data.relatedApps || [])
   })
 
-  if (!isEditMode.value && options) {
-    title.value = options.title || '软件授权'
-    categoryIcon.value = options.icon || 'i-carbon-code'
-    categoryId.value = options.id || '7'
+  if (!isEditMode.value && options?.id) {
+    categoryId.value = options.id
   }
 })
 
@@ -87,7 +83,7 @@ async function handleSave() {
     <Header :title="isEditMode ? '编辑授权' : title" fixed @back="uni.navigateBack()" />
 
     <view class="px-6 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录名称 (如: 办公软件)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 办公软件)" />
 
       <FieldGroup>
         <FieldItem v-model="formData.softwareName" name="softwareName" label="软件名称" placeholder="请输入软件名称" />

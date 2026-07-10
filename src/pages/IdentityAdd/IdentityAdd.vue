@@ -1,20 +1,15 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { provide, reactive, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import { useFormEngine } from '@/composables/useFormEngine'
 import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 import { useVaultStore } from '@/composables/useVaultStore'
+import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 
-// 1. 定义本页字段清单
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  idType: '',
-  realName: '',
-  idNumber: '',
-  validFrom: '',
-  validTo: '',
-  authority: '',
-})
+// 1. 初始化引擎 - 字段清单从 Schema 派生
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('identity'))
 
 const { validateBase } = useFormValidation()
 const { saveRecord } = useVaultStore()
@@ -29,20 +24,21 @@ provide('formManager', {
 
 // 2. 初始化与生命周期
 const title = ref('身份信息')
-const categoryIcon = ref('i-carbon-user')
+const inputTitle = ref('')
 const categoryId = ref('2')
+const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['2'])
 const idTypeOptions = ['身份证', '护照', '港澳通行证', '驾驶证', '社保卡']
 const handleTypeChange = e => formData.value.idType = idTypeOptions[e.detail.value]
 const handleDateSelect = (field, e) => formData.value[field] = e.detail.value
 
 onLoad((options) => {
   init(options, (data) => {
+    inputTitle.value = data.name
+    categoryId.value = String(data.categoryId)
     setRelatedApps(data.relatedApps || [])
   })
-  if (!isEditMode.value && options) {
-    title.value = options.title || '身份信息'
-    categoryIcon.value = options.icon || 'i-carbon-user'
-    categoryId.value = options.id || '2'
+  if (!isEditMode.value && options?.id) {
+    categoryId.value = options.id
   }
 })
 
@@ -74,7 +70,7 @@ async function handleSave() {
     // 基础元数据
     id: isEditMode.value ? recordId.value : `${Date.now()}`,
     categoryId: categoryId.value,
-    name: formData.value.realName || '未命名身份',
+    name: inputTitle.value.trim() || formData.value.realName || '未命名身份',
 
     // 业务主键
     account: String(formData.value.idNumber).trim(),
@@ -106,7 +102,7 @@ async function handleSave() {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑记录' : title" fixed @back="uni.navigateBack()" />
     <view class="px-6 py-4">
-      <RecordNameCard v-model="formData.realName" :icon="categoryIcon" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" />
       <view class="mt-6">
         <FieldGroup>
           <picker mode="selector" :range="idTypeOptions" @change="handleTypeChange">
@@ -114,6 +110,7 @@ async function handleSave() {
           </picker>
           <FieldItem v-model="formData.realName" name="realName" label="姓名" required />
           <FieldItem v-model="formData.idNumber" name="idNumber" label="号码" required type="idcard" />
+          <FieldItem v-model="formData.phone" name="phone" label="手机号码" type="phone" placeholder="输入手机号码" />
           <picker mode="date" @change="(e) => handleDateSelect('validFrom', e)">
             <FieldItem v-model="formData.validFrom" name="validFrom" label="生效日期" readonly show-calendar />
           </picker>

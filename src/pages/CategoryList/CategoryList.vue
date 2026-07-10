@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import DetailCopySheet from '@/components/DetailCopySheet.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
 import Header from '@/components/Header.vue'
 import SearchBar from '@/components/index/SearchBar.vue'
 import { CATEGORY_ROUTE_MAP } from '@/utils/config' // 引入配置
+import { buildDetailList } from '@/utils/itemDetail'
 import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
 
 // 状态定义
@@ -17,24 +18,9 @@ const showDetail = ref(false)
 const activeItem = ref<any>(null)
 
 /**
- * 数据适配器
+ * 详情页数据:从 rawData + 顶层 account/password/relatedApps 合并去重
  */
-const activeDetailList = computed(() => {
-  const item = activeItem.value
-
-  if (!item || !Array.isArray(item.rawData))
-    return []
-
-  // 基础字段处理 (rawData 本身已经是 [{label, value, key}])
-  const list = item.rawData.map((field: any) => {
-    return {
-      label: field.label,
-      value: field.value,
-    }
-  })
-
-  return list
-})
+const activeDetailList = computed(() => buildDetailList(activeItem.value))
 // 生命周期
 onLoad((options: any) => {
   if (options.title)

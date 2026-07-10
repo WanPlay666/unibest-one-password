@@ -38,11 +38,11 @@ export const TYPE_SCHEMAS: Record<TypeName, TypeSchema> = {
     icon: 'i-carbon-password',
     color: 'bg-blue-600',
     fields: [
-      { key: 'username', label: '账号' },
+      { key: 'account', label: '账号' },
       { key: 'password', label: '密码' },
     ],
-    nameFallback: ['username'],
-    accountField: 'username',
+    nameFallback: ['account'],
+    accountField: 'account',
     passwordField: 'password',
     defaultName: '未命名账号',
   },
@@ -210,12 +210,26 @@ export function isKnownType(type: string): type is TypeName {
   return type in TYPE_SCHEMAS
 }
 
+/**
+ * 从 Schema 派生 formData 初始值。Schema 是字段 key 的唯一权威来源,
+ * 9 个新增页应该调用 `useFormEngine(getFormDataInitial('xxx'))` 而不是硬编码字段列表。
+ */
+export function getFormDataInitial(typeName: TypeName): Record<string, string> {
+  const schema = TYPE_SCHEMAS[typeName]
+  const result: Record<string, string> = {}
+  for (const f of schema.fields) {
+    result[f.key] = ''
+  }
+  return result
+}
+
 // ─── 归一化 ─────────────────────────────────────────────
 
 export interface NormalizedItem {
   id: string
   type: TypeName
   categoryId: string
+  username: string,
   name: string
   account: string
   password: string
@@ -262,9 +276,11 @@ function pickName(schema: TypeSchema, src: any): string {
 }
 
 function buildRawData(schema: TypeSchema, src: any): Array<{ key: string, label: string, value: string }> {
-  // 优先使用导入数据自带的 rawData(已经是详情页结构)
+  let result: Array<{ key: string, label: string, value: string }> = []
+
   if (Array.isArray(src.rawData) && src.rawData.length) {
-    return src.rawData
+    // 优先使用导入数据自带的 rawData(已经是详情页结构)
+    result = src.rawData
       .filter((f: any) => f && (f.value !== undefined && f.value !== ''))
       .map((f: any) => ({
         key: String(f.key || ''),
@@ -272,10 +288,45 @@ function buildRawData(schema: TypeSchema, src: any): Array<{ key: string, label:
         value: String(f.value ?? ''),
       }))
   }
-  // 否则由 schema 字段定义重建
-  return schema.fields
-    .filter(f => src[f.key] !== undefined && src[f.key] !== '')
-    .map(f => ({ key: f.key, label: f.label, value: String(src[f.key]) }))
+  else {
+    // 否则由 schema 字段定义重建
+    result = schema.fields
+      .filter(f => src[f.key] !== undefined && src[f.key] !== '')
+      .map(f => ({ key: f.key, label: f.label, value: String(src[f.key]) }))
+  }
+
+  // 补全账号:用 schema.accountField 找值,找不到时回退 src.account
+  if (!result.some(f => f.key === 'account' || f.key === schema.accountField)) {
+    const accountVal = schema.accountField
+      ? String(src[schema.accountField] ?? src.account ?? '').trim()
+      : String(src.account ?? '').trim()
+    if (accountVal)
+      result.unshift({ key: 'account', label: '账号', value: accountVal })
+  }
+
+  // 补全密码
+  if (schema.passwordField && !result.some(f => f.key === 'password' || f.key === schema.passwordField)) {
+    const passwordVal = String(src[schema.passwordField] ?? src.password ?? '')
+    if (passwordVal)
+      result.splice(1, 0, { key: 'password', label: '密码', value: passwordVal })
+  }
+
+  // 补全关联应用
+  if (!result.some(f => f.key === 'relatedApps') && Array.isArray(src.relatedApps) && src.relatedApps.length) {
+    const apps = src.relatedApps
+      .map((a: any) => {
+        if (typeof a === 'string')
+          return a
+        if (a && a.value)
+          return String(a.value)
+        return ''
+      })
+      .filter(Boolean)
+    if (apps.length)
+      result.push({ key: 'relatedApps', label: '关联应用', value: apps.join(', ') })
+  }
+
+  return result
 }
 
 function buildRelatedApps(src: any): any[] {
@@ -333,6 +384,7 @@ export function normalizeItem(raw: any): { ok: true, item: NormalizedItem } | { 
     type: resolved.type,
     categoryId: resolved.categoryId,
     name,
+    username: account,
     account,
     password,
     relatedApps: buildRelatedApps(raw),
@@ -387,99 +439,174 @@ export function parseImport(rawText: string): ParseResult {
 // ─── 导入模版示例 ─────────────────────────────────────
 
 /**
- * 生成一份覆盖 9 种 type 的导入模版,每条仅保留该 type 必填/最常见的字段,
- * 方便用户参考字段命名与结构,然后填入真实数据。
+ * 导入模版示例 —— 新增页数据字段的"权威示例字典"
+ *
+ * 每条记录由三部分组成,顺序固定:
+ *   1. 顶层固定字段:`type` / `name` / `relatedApps`
+ *   2. 业务字段:从该 type 的 `schema.fields` 派生,key 与之一一对应
+ *   3. 兜底字段:`account` 仍可作为顶层字段冗余存放,normalizeItem 优先取
+ *      `schema.accountField` 对应的值,其次 `raw.account` 兜底
+ *
+ * 字段 key 必须与 TYPE_SCHEMAS[type].fields[].key 严格一致。
+ * 缺示例值时 buildImportTemplate 会用 `示例<label>` 占位,不会留空。
+ */
+interface TemplateExample {
+  /** 记录名称 (用户自定义别名,如 "GitHub"、"我的身份证") */
+  name: string
+  /** 关联网址 / APP 列表 */
+  relatedApps: string[]
+  /**
+   * 业务字段示例。key 必须是 schema.fields[].key;label 见同位置的 schema。
+   * 缺失字段会回落到 `示例<label>`,不阻断模板生成。
+   */
+  fields: Record<string, string>
+}
+
+const TEMPLATE_EXAMPLES: Record<TypeName, TemplateExample> = {
+  // ── 基础登录 (login / categoryId=1) ─────────────────
+  login: {
+    name: 'GitHub',
+    relatedApps: ['github.com'],
+    fields: {
+      account: 'user@example.com', // 账号
+      password: 'your-password',   // 密码
+    },
+  },
+
+  // ── 身份信息 (identity / categoryId=2) ───────────────
+  identity: {
+    name: '我的身份证',
+    relatedApps: [],
+    fields: {
+      idType: '身份证',                  // 证件类型
+      realName: '张三',                  // 姓名
+      idNumber: '110101199001011234',    // 证件号码
+      validFrom: '2020-01-01',           // 生效日期 (YYYY-MM-DD)
+      validTo: '2030-01-01',             // 失效日期 (YYYY-MM-DD)
+      authority: '北京市公安局',           // 签发机关
+    },
+  },
+
+  // ── 银行支付 (bank / categoryId=3) ───────────────────
+  bank: {
+    name: '招商银行 (6666)',
+    relatedApps: [],
+    fields: {
+      bankName: '招商银行',              // 银行名称
+      cardType: '储蓄卡',                // 卡片类型 (储蓄卡 / 信用卡 / 其它)
+      cardNumber: '6225880137666666',    // 卡号
+      holderName: '张三',                // 持卡人
+      phone: '13800138000',              // 预留手机
+      cvv: '123 / 09-28',                // CVV / 有效期 (信用卡专用,可选)
+      remark: '工资卡',                   // 备注说明 (可选)
+    },
+  },
+
+  // ── 社交通讯 (social / categoryId=4) ─────────────────
+  social: {
+    name: '个人微信',
+    relatedApps: [],
+    fields: {
+      platform: '微信',                  // 平台
+      account: 'wxid_abc123',            // 账号
+      payPassword: 'pay-pass-123',       // 支付密码
+    },
+  },
+
+  // ── 车辆信息 (vehicle / categoryId=5) ─────────────────
+  vehicle: {
+    name: '粤B·XXXXX',
+    relatedApps: [],
+    fields: {
+      plateNumber: '粤B·XXXXX',          // 车牌号
+      vin: 'LSGPC52U8AF123456',          // 车辆识别号 (VIN)
+      engineNumber: 'ENG123456',         // 发动机号
+      registerDate: '2022-03-15',        // 注册日期 (YYYY-MM-DD)
+      insurance: '平安保险 PA-2024-001', // 保险信息
+      insuranceExpiry: '2025-03-15',     // 保险到期日 (YYYY-MM-DD)
+    },
+  },
+
+  // ── 企业开票 (business / categoryId=6) ───────────────
+  business: {
+    name: '我的公司',
+    relatedApps: [],
+    fields: {
+      companyName: '某某科技有限公司',    // 公司全称
+      taxId: '91110000123456789X',       // 税号 (统一社会信用代码)
+      addressPhone: '北京市朝阳区xxx路 010-12345678', // 地址电话
+      bankAccount: '招商银行 6225880137666666',       // 开户行账号
+      email: 'billing@example.com',      // 接收发票邮箱
+    },
+  },
+
+  // ── 医疗社保 (medical / categoryId=7) ────────────────
+  medical: {
+    name: '个人社保',
+    relatedApps: [],
+    fields: {
+      cardNumber: '1234567890',          // 社保卡号
+      password: 'query-pass',            // 查询密码
+      fundAccount: 'G123456',            // 公积金账号
+      hospital: '北京协和医院',           // 定点医院
+    },
+  },
+
+  // ── Wi-Fi 网络 (wifi / categoryId=8) ─────────────────
+  wifi: {
+    name: '家里 WiFi',
+    relatedApps: [],
+    fields: {
+      ssid: 'Home-WiFi-5G',              // 网络名称 (SSID)
+      wifiPassword: 'wifi-pass-123',     // Wi-Fi 密码
+      adminAccount: 'admin',             // 路由器后台账号
+      adminPassword: 'admin-pass',       // 路由器后台密码
+    },
+  },
+
+  // ── 软件授权 (software / categoryId=9) ───────────────
+  software: {
+    name: 'JetBrains IDEA',
+    relatedApps: [],
+    fields: {
+      softwareName: 'JetBrains IntelliJ IDEA', // 软件名称
+      licenseKey: 'ABCD-1234-EFGH-5678',       // 激活码 / 许可证
+      limitation: '1年个人订阅',                 // 限制条件 (可选)
+    },
+  },
+}
+
+/**
+ * 生成一份覆盖 9 种 type 的导入模版。
+ * 字段 key 全部从 TYPE_SCHEMAS[type].fields 派生 —— Schema 是字段的唯一权威来源,
+ * 之后给某个 type 加字段,模板会自动包含;示例值缺失时用 `示例<label>` 兜底。
+ *
+ * 顶层结构:`{ type, name, <schema.fields 字段...>, relatedApps }`
+ *   - `name` 顶层:记录别名,UI 中由 RecordNameCard 输入
+ *   - `account`:作为 schema.fields 的字段出现(login / social),
+ *                normalizeItem 仍兼容顶层 `account` 兜底
+ *   - `relatedApps` 顶层:关联网址 / APP 列表
  */
 export function buildImportTemplate(): string {
-  const payload = {
-    version: '1.0',
-    exportedAt: Date.now(),
-    items: [
-      {
-        type: 'login',
-        name: 'GitHub',
-        account: 'user@example.com',
-        password: 'your-password',
-        relatedApps: ['github.com'],
-      },
-      {
-        type: 'identity',
-        name: '我的身份证',
-        account: '110101199001011234',
-        idType: '身份证',
-        realName: '张三',
-        idNumber: '110101199001011234',
-        validFrom: '2020-01-01',
-        validTo: '2030-01-01',
-        authority: '北京市公安局',
-      },
-      {
-        type: 'bank',
-        name: '招商银行 (6666)',
-        account: '6225880137666666',
-        bankName: '招商银行',
-        cardType: '储蓄卡',
-        cardNumber: '6225880137666666',
-        holderName: '张三',
-        phone: '13800138000',
-      },
-      {
-        type: 'social',
-        name: '个人微信',
-        account: 'wxid_abc123',
-        platform: '微信',
-        payPassword: 'pay-pass-123',
-      },
-      {
-        type: 'vehicle',
-        name: '粤B·XXXXX',
-        account: '粤B·XXXXX',
-        plateNumber: '粤B·XXXXX',
-        vin: 'LSGPC52U8AF123456',
-        engineNumber: 'ENG123456',
-        registerDate: '2022-03-15',
-        insurance: '平安保险 PA-2024-001',
-        insuranceExpiry: '2025-03-15',
-      },
-      {
-        type: 'business',
-        name: '我的公司',
-        account: '91110000123456789X',
-        companyName: '某某科技有限公司',
-        taxId: '91110000123456789X',
-        addressPhone: '北京市朝阳区xxx路 010-12345678',
-        bankAccount: '招商银行 6225880137666666',
-        email: 'billing@example.com',
-      },
-      {
-        type: 'medical',
-        name: '个人社保',
-        account: '1234567890',
-        cardNumber: '1234567890',
-        password: 'query-pass',
-        fundAccount: 'G123456',
-        hospital: '北京协和医院',
-      },
-      {
-        type: 'wifi',
-        name: '家里 WiFi',
-        account: 'Home-WiFi-5G',
-        ssid: 'Home-WiFi-5G',
-        wifiPassword: 'wifi-pass-123',
-        adminAccount: 'admin',
-        adminPassword: 'admin-pass',
-      },
-      {
-        type: 'software',
-        name: 'JetBrains IDEA',
-        account: 'ABCD-1234-EFGH-5678',
-        softwareName: 'JetBrains IntelliJ IDEA',
-        licenseKey: 'ABCD-1234-EFGH-5678',
-        limitation: '1年个人订阅',
-      },
-    ],
-  }
-  return JSON.stringify(payload, null, 2)
+  const items = Object.values(TYPE_SCHEMAS).map((schema) => {
+    const ex: TemplateExample = TEMPLATE_EXAMPLES[schema.type] ?? {
+      name: '示例',
+      relatedApps: [],
+      fields: {},
+    }
+    const item: Record<string, any> = {
+      type: schema.type,
+      name: ex.name,
+    }
+    // 按 schema.fields 顺序填入示例,缺失则用 `示例<label>` 占位
+    for (const f of schema.fields) {
+      item[f.key] = ex.fields[f.key] ?? `示例${f.label}`
+    }
+    item.relatedApps = ex.relatedApps
+    return item
+  })
+
+  return JSON.stringify({ version: '1.0', exportedAt: Date.now(), items }, null, 2)
 }
 
 // ─── 重复检测 ───────────────────────────────────────────

@@ -6,7 +6,7 @@ const props = withDefaults(defineProps<{
   label: string // 标签名称
   modelValue: string // 绑定值
   placeholder?: string
-  type?: 'text' | 'number' | 'idcard' | 'digit' | 'tel' | 'password'
+  type?: 'text' | 'number' | 'idcard' | 'digit' | 'tel' | 'password' | 'phone' | 'email'
   showCopy?: boolean
   showCalendar?: boolean
   showArrow?: boolean

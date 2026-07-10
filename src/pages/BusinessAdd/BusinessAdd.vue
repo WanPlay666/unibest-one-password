@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { provide, reactive, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
@@ -13,15 +13,11 @@ import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 // 导入统一的业务引擎
 import { useVaultStore } from '@/composables/useVaultStore'
+import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 
-// 1. 初始化引擎：定义企业开票的字段清单
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  companyName: '',
-  taxId: '',
-  addressPhone: '',
-  bankAccount: '',
-  email: '',
-})
+// 1. 初始化引擎 - 字段清单从 Schema 派生
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('business'))
 
 const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
 const { saveRecord } = useVaultStore()
@@ -30,8 +26,8 @@ const { validateBase } = useFormValidation()
 // 页面基础状态
 const title = ref('企业开票')
 const inputTitle = ref('')
-const categoryIcon = ref('i-carbon-receipt')
-const categoryId = ref('4')
+const categoryId = ref('6')
+const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['6'])
 
 // --- 2. 表单注册中心 (实现自动化校验的核心) ---
 const fieldRegistry = reactive(new Map<string, any>())
@@ -52,10 +48,8 @@ onLoad((options: any) => {
     }
   })
 
-  if (!isEditMode.value && options) {
-    title.value = options.title || '企业开票'
-    categoryIcon.value = options.icon || 'i-carbon-receipt'
-    categoryId.value = options.id || '4'
+  if (!isEditMode.value && options?.id) {
+    categoryId.value = options.id
   }
 })
 
@@ -103,7 +97,7 @@ async function handleSave() {
     <Header :title="isEditMode ? '编辑发票信息' : title" fixed @back="uni.navigateBack()" />
 
     <view class="px-6 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录别名 (如: 我的公司)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 我的公司)" />
 
       <FieldGroup>
         <FieldItem v-model="formData.companyName" name="companyName" label="公司全称" required placeholder="请输入营业执照上的全称" />

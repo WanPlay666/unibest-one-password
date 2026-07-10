@@ -74,10 +74,28 @@ export default defineConfig({
   ],
   // 动态图标需要在这里配置，或者写在vue页面中注释掉
   safelist: [
-    'i-carbon-password',
-    'i-carbon-code',
+    // ===== 9 个分类图标(动态 :class="[item.icon]" 绑定,需 safelist 防 purge) =====
+    'i-carbon-password', // 基础登录
+    'i-carbon-user', // 身份信息
+    'i-carbon-wallet', // 银行支付
+    'i-carbon-chat', // 社交通讯
+    'i-carbon-car', // 车辆信息
+    'i-carbon-receipt', // 企业开票
+    'i-carbon-stethoscope', // 医疗社保
+    'i-carbon-wifi', // Wi-Fi 网络
+    'i-carbon-code', // 软件授权
+    // ===== 9 个分类背景色(动态 :class="[item.color]" 绑定,需 safelist 防 purge) =====
+    'bg-blue-600',
+    'bg-indigo-500',
+    'bg-emerald-500',
+    'bg-sky-400',
+    'bg-orange-500',
+    'bg-pink-400',
+    'bg-red-500',
+    'bg-violet-500',
+    'bg-slate-500',
+    // 其它常用图标
     'i-carbon-home',
-    'i-carbon-user',
     'i-carbon-ibm-watson-language-translator',
     'i-carbon-db2-database',
     'i-carbon-ibm-cloud-key-protect',
@@ -92,7 +110,6 @@ export default defineConfig({
     'i-carbon-chevron-right',
     'i-carbon-logo-google',
     'i-carbon-piggy-bank',
-    'i-carbon-chat',
     'i-carbon-currency',
     'i-carbon-document',
     'i-carbon-shopping-cart',

@@ -8,6 +8,7 @@ import SearchBar from '@/components/index/SearchBar.vue'
 
 import { useRecordActions } from '@/composables/useRecordActions'
 import { CATEGORY_MAP, CATEGORY_ROUTE_MAP } from '@/utils/config'
+import { buildDetailList } from '@/utils/itemDetail'
 import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
 
 // --- 1. 类型定义与常量隔离 (解耦) ---
@@ -68,16 +69,8 @@ const filteredData = computed(() => {
   })
 })
 
-// 数据适配器：专职负责将底层数据转化为 UI 组件所需的标准格式 (单一职责)
-const activeDetailList = computed(() => {
-  if (!activeItem.value || !Array.isArray(activeItem.value.rawData))
-    return []
-
-  return activeItem.value.rawData.map(field => ({
-    label: field.label,
-    value: field.value,
-  }))
-})
+// 数据适配器：从 rawData + 顶层字段合并去重
+const activeDetailList = computed(() => buildDetailList(activeItem.value))
 
 // --- 5. 交互行为层 ---
 function handleInput(val: string) {

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { onLoad } from '@dcloudio/uni-app'
-import { provide, reactive, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
@@ -13,14 +13,11 @@ import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 // 核心 Composables
 import { useVaultStore } from '@/composables/useVaultStore'
+import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 
-// 1. 初始化引擎
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  ssid: '',
-  wifiPassword: '',
-  adminAccount: '',
-  adminPassword: '',
-})
+// 1. 初始化引擎 - 字段清单从 Schema 派生
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('wifi'))
 
 const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
 const { saveRecord } = useVaultStore()
@@ -37,8 +34,8 @@ provide('formManager', {
 // 3. 基础 UI 状态
 const title = ref('Wi-Fi 网络')
 const inputTitle = ref('')
-const categoryIcon = ref('i-carbon-wifi')
-const categoryId = ref('9')
+const categoryId = ref('8')
+const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['8'])
 
 onLoad((options: any) => {
   init(options, (data) => {
@@ -47,10 +44,8 @@ onLoad((options: any) => {
     setRelatedApps(data.relatedApps || [])
   })
 
-  if (!isEditMode.value && options) {
-    title.value = options.title || 'Wi-Fi 网络'
-    categoryIcon.value = options.icon || 'i-carbon-wifi'
-    categoryId.value = options.id || '9'
+  if (!isEditMode.value && options?.id) {
+    categoryId.value = options.id
   }
 })
 
@@ -89,7 +84,7 @@ async function handleSave() {
     <Header :title="isEditMode ? '编辑 Wi-Fi' : title" fixed @back="uni.navigateBack()" />
 
     <view class="px-6 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="categoryIcon" placeholder="记录名称 (如: 家里宽带)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 家里宽带)" />
 
       <FieldGroup>
         <FieldItem v-model="formData.ssid" name="ssid" label="网络名称" required placeholder="请输入 Wi-Fi 名称" />

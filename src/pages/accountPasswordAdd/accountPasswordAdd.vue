@@ -14,13 +14,11 @@ import { useFormValidation } from '@/composables/useFormValidation'
 import { useRelatedItems } from '@/composables/useRelatedItems'
 import { useVaultStore } from '@/composables/useVaultStore'
 import { CATEGORY_MAP } from '@/utils/config'
+import { getFormDataInitial } from '@/utils/importSchema'
 import { checkPasswordStrength } from '@/utils/password-strength'
 
 // 1. 初始化引擎与状态
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine({
-  username: '',
-  password: '',
-})
+const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('login'))
 const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
 const { saveRecord } = useVaultStore()
 const { validateBase } = useFormValidation()
@@ -63,8 +61,8 @@ function validate(): boolean {
   if (!validateBase(fieldRegistry))
     return false
 
-  const { username, password } = formData.value
-  if (!username && !password) {
+  const { account, password } = formData.value
+  if (!account && !password) {
     uni.showToast({ title: '账号和密码至少填写一项', icon: 'none' })
     return false
   }
@@ -85,8 +83,8 @@ async function handleSave() {
     id: isEditMode.value ? recordId.value : `${Date.now()}`,
     categoryId: categoryId.value,
     // 逻辑：优先取手动输入的标题，其次取账号名
-    name: inputTitle.value.trim() || formData.value.username || '未命名记录',
-    account: String(formData.value.username).trim(),
+    name: inputTitle.value.trim() || formData.value.account || '未命名记录',
+    account: String(formData.value.account).trim(),
     password: formData.value.password,
     relatedApps: finalRelatedApps, // 根节点存储供编辑回显
     rawData: getRawData(fieldRegistry, finalRelatedApps), // 整合供详情展示
@@ -112,14 +110,15 @@ async function handleSave() {
       <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" />
 
       <FieldGroup>
-        <FieldItem v-model="formData.username" name="username" label="账号" required placeholder="手机/邮箱/用户名" />
-        <FieldItem
-          v-model="formData.password" name="password" label="密码" required type="password"
-          placeholder="输入登录密码" show-copy :is-last="true"
-        />
+        <FieldItem v-model="formData.account" name="account" label="账号" required placeholder="手机/邮箱/用户名" />
+        <FieldItem v-model="formData.password" name="password" label="密码" required type="password" placeholder="输入登录密码"
+          show-copy :is-last="true" />
+        <FieldItem v-model="formData.phone" name="phone" label="手机号码" type="phone" placeholder="输入手机号码" />
+
+
       </FieldGroup>
 
-      <StrengthSlider :strength-score="strength.score" :strength-color="strength.color" />
+      <!-- <StrengthSlider :strength-score="strength.score" :strength-color="strength.color" /> -->
 
       <RelatedAppsCard v-model="relatedApps" />
 
