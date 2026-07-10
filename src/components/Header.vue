@@ -56,13 +56,11 @@ const totalHeight = computed(() => {
 
 <template>
   <view class="nav-container">
-    <view
-      :class="[fixed ? 'fixed top-0 left-0 w-full overflow-hidden' : 'relative overflow-hidden']" :style="{
-        backgroundColor: bgColor,
-        zIndex: props.zIndex,
-        transition: 'background-color 0.3s',
-      }"
-    >
+    <view :class="[fixed ? 'fixed top-0 left-0 w-full overflow-hidden' : 'relative overflow-hidden']" :style="{
+      backgroundColor: bgColor,
+      zIndex: props.zIndex,
+      transition: 'background-color 0.3s',
+    }">
       <view v-if="showStatusBar" :style="{ height: `${statusBarHeight}px` }" />
 
       <view class="flex items-center px-4" :style="{ height: `${navInfo.contentHeight}px` }">
@@ -70,10 +68,9 @@ const totalHeight = computed(() => {
           <template v-if="showLeft">
             <slot name="left">
               <view
-                class="h-10 w-10 flex cursor-pointer items-center justify-center transition-opacity -ml-3 active:bg-[#1A1A1A]"
-                @click="emit('back')"
-              >
-                <view class="i-carbon-chevron-left text-2xl text-gray-400" />
+                class="h-12 w-12 flex cursor-pointer items-center justify-center transition-opacity -ml-3 active:bg-[#1A1A1A]"
+                @click="emit('back')">
+                <view class="i-carbon-chevron-left text-2xl text-gray-300" />
               </view>
             </slot>
           </template>
@@ -81,7 +78,7 @@ const totalHeight = computed(() => {
 
         <view class="min-w-0 flex flex-1 items-center justify-center overflow-hidden">
           <slot>
-            <text class="truncate text-[15px] text-white font-bold tracking-wide">
+            <text class="truncate text-sm text-white font-bold tracking-wide">
               {{ title }}
             </text>
           </slot>

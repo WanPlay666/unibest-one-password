@@ -99,6 +99,11 @@ export default defineConfig({
     'i-carbon-game-console',
     'i-carbon-warning-alt',
     'i-carbon-folder',
+    // 用户设置页面
+    'i-carbon-edit',
+    'i-carbon-time',
+    'i-carbon-trash-can',
+    'i-carbon-fingerprint-recognition',
   ],
   rules: [
     [

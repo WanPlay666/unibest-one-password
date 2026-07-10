@@ -12,7 +12,6 @@ definePage({
 <template>
   <view class="px-6 pt-safe">
     <Header title="智能密码生成器" fixed :show-left="false" />
-
     <PasswordGenerator />
   </view>
 </template>

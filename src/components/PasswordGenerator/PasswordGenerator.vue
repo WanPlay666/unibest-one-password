@@ -70,38 +70,29 @@ onMounted(() => {
         <view class="h-10 w-10 flex items-center justify-center rounded-xl bg-blue-600/20">
           <view class="i-carbon-flash-filled text-xl text-blue-500" />
         </view>
-        <text class="text-lg text-white font-bold tracking-tight">智能生成器</text>
       </view>
 
       <view class="flex border border-white/5 rounded-xl bg-black p-1">
-        <view
-          :class="mode === 'pin' ? 'bg-[#222] text-white shadow-sm' : 'text-gray-500'"
-          class="cursor-pointer rounded-lg px-4 py-1.5 text-xs font-bold transition-all" @click="mode = 'pin'"
-        >
+        <view :class="mode === 'pin' ? 'bg-[#222] text-white shadow-sm' : 'text-gray-500'"
+          class="cursor-pointer rounded-lg px-4 py-1.5 text-xs font-bold transition-all" @click="mode = 'pin'">
           PIN
         </view>
-        <view
-          :class="mode === 'custom' ? 'bg-[#222] text-white shadow-sm' : 'text-gray-500'"
-          class="cursor-pointer rounded-lg px-4 py-1.5 text-xs font-bold transition-all" @click="mode = 'custom'"
-        >
+        <view :class="mode === 'custom' ? 'bg-[#222] text-white shadow-sm' : 'text-gray-500'"
+          class="cursor-pointer rounded-lg px-4 py-1.5 text-xs font-bold transition-all" @click="mode = 'custom'">
           自定义
         </view>
       </view>
     </view>
 
     <view
-      class="group relative mb-6 min-h-120px flex items-center justify-center border border-white/5 rounded-2xl bg-black p-8"
-    >
-      <text
-        class="break-all text-center text-white tracking-widest font-mono transition-all"
-        :class="mode === 'pin' ? 'text-4xl' : 'text-2xl'"
-      >
+      class="group relative mb-6 min-h-120px flex items-center justify-center border border-white/5 rounded-2xl bg-black p-8">
+      <text class="break-all text-center text-white tracking-widest font-mono transition-all"
+        :class="mode === 'pin' ? 'text-4xl' : 'text-2xl'">
         {{ result }}
       </text>
       <view
         class="absolute bottom-3 right-3 rounded-full bg-white/5 p-3 transition-all active:scale-90 active:bg-white/10"
-        @click="copy"
-      >
+        @click="copy">
         <view class="i-carbon-copy text-lg text-gray-500" />
       </view>
     </view>
@@ -109,48 +100,42 @@ onMounted(() => {
     <view class="mb-8 px-2">
       <view class="mb-4 flex items-center justify-between">
         <view class="flex items-baseline gap-1">
-          <text class="text-xs text-gray-500 uppercase">长度:</text>
-          <text class="text-xl text-blue-500 font-bold font-mono">{{ length }}</text>
+          <text class="text-sm text-gray-500 uppercase">长度:</text>
+          <text class="text-sm text-blue-500 font-bold font-mono">{{ length }}</text>
         </view>
-        <text class="rounded bg-white/5 px-2 py-0.5 text-[10px] text-gray-600 italic">
+        <text class="rounded bg-white/5 px-2 py-0.5 text-sm text-gray-500 ">
           推荐：{{ mode === 'pin' ? '4-8位' : '12位以上' }}
         </text>
       </view>
-      <slider
-        :value="length" :min="mode === 'pin' ? 4 : 8" :max="32" active-color="#3b82f6" background-color="#222"
-        :block-size="20" @change="(e) => { length = e.detail.value; handleGenerate() }"
-      />
+      <slider :value="length" :min="mode === 'pin' ? 4 : 8" :max="32" active-color="#3b82f6" background-color="#222"
+        :block-size="20" @change="(e) => { length = e.detail.value; handleGenerate() }" />
     </view>
 
     <view v-if="mode === 'custom'" class="grid grid-cols-2 mb-4 animate-fade-in animate-duration-300 gap-3">
       <view
         :class="hasSymbols ? 'bg-blue-600 text-white border-blue-400/30' : 'bg-[#1a1a1a] text-gray-500 border-white/5'"
-        class="border rounded-2xl px-2 py-3.5 text-center text-[11px] font-bold transition-all active:scale-95"
-        @click="hasSymbols = !hasSymbols"
-      >
-        符号 (!@#)
+        class="border rounded-2xl px-2 py-3.5 text-center text-sm font-bold transition-all active:scale-95"
+        @click="hasSymbols = !hasSymbols">
+        符号
       </view>
       <view
         :class="hasNumbers ? 'bg-blue-600 text-white border-blue-400/30' : 'bg-[#1a1a1a] text-gray-500 border-white/5'"
-        class="border rounded-2xl px-2 py-3.5 text-center text-[11px] font-bold transition-all active:scale-95"
-        @click="hasNumbers = !hasNumbers"
-      >
-        数字 (123)
+        class="border rounded-2xl px-2 py-3.5 text-center text-sm font-bold transition-all active:scale-95"
+        @click="hasNumbers = !hasNumbers">
+        数字
       </view>
       <view
         :class="hasUppercase ? 'bg-blue-600 text-white border-blue-400/30' : 'bg-[#1a1a1a] text-gray-500 border-white/5'"
-        class="col-span-2 border rounded-2xl py-3.5 text-center text-[11px] font-bold transition-all active:scale-95"
-        @click="hasUppercase = !hasUppercase"
-      >
-        大写字母 (ABC)
+        class="col-span-2 border rounded-2xl py-3.5 text-center text-sm font-bold transition-all active:scale-95"
+        @click="hasUppercase = !hasUppercase">
+        大写字母
       </view>
     </view>
     <button
-      class="w-full flex items-center justify-center gap-2 rounded-2xl border-none bg-white py-2 text-black transition-all active:scale-[0.98] hover:bg-gray-100"
-      @click="handleGenerate"
-    >
+      class="w-full flex items-center justify-center gap-3 rounded-2xl border-none bg-white py-3.5 text-black transition-all active:scale-[0.98] hover:bg-gray-100"
+      @click="handleGenerate">
       <view class="i-carbon-renew text-sm" />
-      <text class="text-[11px] font-bold tracking-wider uppercase">
+      <text class="text-sm font-bold  tracking-wider uppercase">
         重新生成 {{ mode === 'pin' ? 'PIN' : '' }}
       </text>
     </button>

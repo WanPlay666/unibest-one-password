@@ -16,21 +16,22 @@ export const CATEGORY_ROUTE_MAP: Record<string, string> = {
 export interface CategoryConfig {
   name: any
   id: string
+  type: string
   title: string
   icon: string
   color: string
 }
 
 export const CATEGORY_MAP: Record<string, CategoryConfig> = {
-  1: { id: '1', title: '基础登录', icon: 'i-carbon-password', color: 'bg-blue-600' },
-  2: { id: '2', title: '身份信息', icon: 'i-carbon-user', color: 'bg-indigo-500' },
-  3: { id: '3', title: '银行支付', icon: 'i-carbon-wallet', color: 'bg-emerald-500' },
-  4: { id: '4', title: '社交通讯', icon: 'i-carbon-chat', color: 'bg-sky-400' },
-  5: { id: '5', title: '车辆信息', icon: 'i-carbon-car', color: 'bg-orange-500' },
-  6: { id: '6', title: '企业开票', icon: 'i-carbon-receipt', color: 'bg-pink-400' },
-  7: { id: '7', title: '医疗社保', icon: 'i-carbon-stethoscope', color: 'bg-red-500' },
-  8: { id: '8', title: 'Wi-Fi 网络', icon: 'i-carbon-wifi', color: 'bg-violet-500' },
-  9: { id: '9', title: '软件授权', icon: 'i-carbon-code', color: 'bg-slate-500' },
+  1: { id: '1', type: 'login', name: '基础登录', title: '基础登录', icon: 'i-carbon-password', color: 'bg-blue-600' },
+  2: { id: '2', type: 'identity', name: '身份信息', title: '身份信息', icon: 'i-carbon-user', color: 'bg-indigo-500' },
+  3: { id: '3', type: 'bank', name: '银行支付', title: '银行支付', icon: 'i-carbon-wallet', color: 'bg-emerald-500' },
+  4: { id: '4', type: 'social', name: '社交通讯', title: '社交通讯', icon: 'i-carbon-chat', color: 'bg-sky-400' },
+  5: { id: '5', type: 'vehicle', name: '车辆信息', title: '车辆信息', icon: 'i-carbon-car', color: 'bg-orange-500' },
+  6: { id: '6', type: 'business', name: '企业开票', title: '企业开票', icon: 'i-carbon-receipt', color: 'bg-pink-400' },
+  7: { id: '7', type: 'medical', name: '医疗社保', title: '医疗社保', icon: 'i-carbon-stethoscope', color: 'bg-red-500' },
+  8: { id: '8', type: 'wifi', name: 'Wi-Fi 网络', title: 'Wi-Fi 网络', icon: 'i-carbon-wifi', color: 'bg-violet-500' },
+  9: { id: '9', type: 'software', name: '软件授权', title: '软件授权', icon: 'i-carbon-code', color: 'bg-slate-500' },
 }
 
 // 方便给“选择分类”页面渲染列表使用
