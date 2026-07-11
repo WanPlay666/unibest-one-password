@@ -103,7 +103,7 @@ defineExpose({ close })
       <view class="flex shrink-0 items-stretch">
         <view
           v-for="(btn, i) in actions" :key="i"
-          class="active:bg-white-10 flex items-center justify-center text-sm text-white font-medium" :style="{
+          class="active:bg-white-10 flex items-center justify-center text-[11px] text-white font-medium" :style="{
             backgroundColor: btn.color || '#ff4d4f',
             width: `${btnWidth}px`,
           }" @click.stop="() => { btn.onClick(); close(); }"

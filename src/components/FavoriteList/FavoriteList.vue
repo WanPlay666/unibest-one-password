@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { CATEGORY_MAP } from '@/utils/config'
-// 新增引入存储工具
 import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 import SwipeActionItem from './SwipeActionItem.vue'
 
 interface Item {
@@ -13,13 +13,15 @@ interface Item {
   isFavorite?: boolean
 }
 
-const props = defineProps<{ list: Item[] }>()
+const STORAGE_KEY = STORAGE_KEYS.VAULT
+
+defineProps<{ list: Item[] }>()
 
 const emit = defineEmits<{
   (e: 'click', item: Item): void
   (e: 'edit', item: Item): void
   (e: 'delete', item: Item): void
-  (e: 'refresh'): void // 通知父组件数据已变动（如需要重新过滤列表）
+  (e: 'refresh'): void
 }>()
 
 const activeIndex = ref<number | null>(null)
@@ -30,49 +32,46 @@ function getVisual(catId: string | number) {
 }
 
 async function toggleFavorite(item: Item) {
-  // 1. 直接修改引用属性，触发 UI 瞬时更新
-  item.isFavorite = !item.isFavorite
+  // 1. 先确定目标状态(不改 UI,等 storage 写回成功再改)
+  const newState = !item.isFavorite
 
-  // 2. 业务逻辑提示
-  uni.showToast({
-    title: item.isFavorite ? '已加入收藏' : '已取消收藏',
-    icon: 'none',
-    duration: 1000,
-  })
-
-  // 🌟 4. 核心修复：在这里直接修改本地缓存
+  // 2. 写回 storage
   try {
-    const STORAGE_KEY = 'ENCRYPTED_VAULT'
-    // 读取最新的本地数据
     const records = getSecureStorage(STORAGE_KEY) || []
-    // 找到当前操作的这条数据
     const index = records.findIndex((r: any) => String(r.id) === String(item.id))
 
-    if (index > -1) {
-      // 更新该条目的收藏状态
-      records[index].isFavorite = item.isFavorite
-      // 重新写回本地缓存
-      setSecureStorage(STORAGE_KEY, records)
+    if (index === -1) {
+      uni.showToast({ title: '记录不存在,无法更新收藏', icon: 'none' })
+      return
     }
+
+    records[index].isFavorite = newState
+    const ok = setSecureStorage(STORAGE_KEY, records)
+    if (!ok) {
+      uni.showToast({ title: '收藏状态保存失败', icon: 'none' })
+      return
+    }
+
+    // 3. storage 写回成功,才更新 UI
+    item.isFavorite = newState
+    uni.showToast({
+      title: newState ? '已加入收藏' : '已取消收藏',
+      icon: 'none',
+      duration: 1000,
+    })
   }
   catch (error) {
-    uni.showToast({ title: '缓存更新失败', icon: 'none' })
-    // 如果保存失败，可以考虑把 UI 状态回滚
-    item.isFavorite = !item.isFavorite
+    uni.showToast({ title: '操作异常,请重试', icon: 'none' })
   }
 
-  // 5. 通知外部（仅用于 UI 刷新，比如在“收藏夹”页面自动把取消收藏的项从视图移除）
   emit('refresh')
 }
 
-/**
- * 构造左滑操作组
- */
 function getActions(item: Item) {
   return [
     {
       text: item.isFavorite ? '取消收藏' : '收藏',
-      color: item.isFavorite ? '#4B5563' : '#3B82F6', // 灰色/蓝色区分
+      color: item.isFavorite ? '#4B5563' : '#3B82F6',
       onClick: () => toggleFavorite(item),
     },
     {
@@ -81,7 +80,7 @@ function getActions(item: Item) {
       onClick: () => {
         uni.showModal({
           title: '安全确认',
-          content: `确定删除“${item.name}”？`,
+          content: `确定删除"${item.name}"?`,
           confirmColor: '#EF4444',
           success: (res) => {
             if (res.confirm)
@@ -98,10 +97,10 @@ function handleTouchEnd() { activeIndex.value = null }
 </script>
 
 <template>
-  <view class="border-white-5 overflow-hidden border rounded-3xl bg-hex-121212">
+  <view class="border-white-5 overflow-hidden border rounded-[16px] bg-hex-121212">
     <SwipeActionItem v-for="(item, index) in list" :key="item.id" :actions="getActions(item)">
       <view
-        class="flex items-center px-4 py-5" :class="[
+        class="flex items-center px-2 py-2" :class="[
           activeIndex === index ? 'bg-white-10' : 'bg-transparent',
           index !== list.length - 1 ? 'border-b border-white-5' : '',
         ]" @click="emit('click', item)"
@@ -111,7 +110,7 @@ function handleTouchEnd() { activeIndex.value = null }
             class="h-12 w-12 flex items-center justify-center rounded-2xl"
             :class="[getVisual(item.categoryId).color]"
           >
-            <view class="text-2xl text-white" :class="[getVisual(item.categoryId).icon]" />
+            <view class="text-sm text-white" :class="[getVisual(item.categoryId).icon]" />
           </view>
 
           <view
@@ -123,16 +122,16 @@ function handleTouchEnd() { activeIndex.value = null }
         </view>
 
         <view class="ml-4 flex-1 overflow-hidden">
-          <view class="truncate text-[15px] text-white font-medium">
+          <view class="truncate text-sm text-white font-medium">
             {{ item.name }}
           </view>
-          <view class="mt-1 truncate text-[13px] text-gray-400 font-mono">
+          <view class="mt-1 truncate text-sm text-gray-400 font-mono">
             {{ item.account }}
           </view>
         </view>
 
         <view class="relative z-10 p-3 -mr-2" @click.stop="emit('edit', item)">
-          <view class="i-carbon-edit text-white-40 text-[18px] active:text-white" />
+          <view class="i-carbon-edit text-white-40 text-sm active:text-white" />
         </view>
       </view>
     </SwipeActionItem>

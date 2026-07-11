@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 import { getStorage } from '@/utils/storage'
 
 export const useAuthStore = defineStore('auth', () => {
@@ -13,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const showBiometricMask = ref(false)
 
   // 用户设置：是否开启了指纹/面容解锁 (只存布尔值，非常安全)
-  const isBiometricEnabled = ref(getStorage('SETTING_BIOMETRIC') === true)
+  const isBiometricEnabled = ref(getStorage(STORAGE_KEYS.BIOMETRIC) === true)
 
   function setAESKey(key: string) {
     memoryAESKey.value = key

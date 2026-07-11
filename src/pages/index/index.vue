@@ -6,6 +6,7 @@ import TopBar from '@/components/index/TopBar.vue'
 import { useAuthStore } from '@/store/auth'
 import { CATEGORY_MAP } from '@/utils/config'
 import { getSecureStorage } from '@/utils/secureStorage'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 
 defineOptions({
   name: 'Home',
@@ -42,7 +43,7 @@ function fetchCategoryCounts() {
   }
 
   try {
-    const allRecords = getSecureStorage('ENCRYPTED_VAULT') || []
+    const allRecords = getSecureStorage(STORAGE_KEYS.VAULT) || []
 
     // 克隆数组重置 count
     const newList = categoryList.value.map(category => ({

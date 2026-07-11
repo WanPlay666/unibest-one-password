@@ -6,13 +6,13 @@ import {
   detectDuplicates,
   commitImport,
   type ItemWithDup,
+  type NormalizedItem,
   type ParseResult,
   type DupAction,
 } from '@/utils/importSchema'
 import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 import { useAuthStore } from '@/store/auth'
-
-const VAULT_KEY = 'ENCRYPTED_VAULT'
 
 export function useDataImport() {
   const isLocked = ref(false)
@@ -21,9 +21,9 @@ export function useDataImport() {
   const rawText = ref('')
   const parseResult = ref<ParseResult | null>(null)
   const entries = ref<ItemWithDup[]>([])
-  const step = ref<1 | 2 | 3 | 4>(1) // 1=粘贴 2=预览 3=重复处理 4=完成
+  const step = ref<1 | 2 | 3 | 4>(1)
 
-  function ensureUnlocked() {
+  function ensureUnlocked(): boolean {
     const auth = useAuthStore()
     if (!auth.memoryAESKey) {
       isLocked.value = true
@@ -33,9 +33,11 @@ export function useDataImport() {
     return true
   }
 
-  // ─── 步骤 1:粘贴 JSON ─────────────────────────────────
+  function getExisting(): NormalizedItem[] {
+    return (getSecureStorage(STORAGE_KEYS.VAULT) as NormalizedItem[] | null) || []
+  }
 
-  function loadFromText(text: string, fallbackName = '手动粘贴.json') {
+  function loadFromText(text: string, fallbackName = '手动粘贴.json'): boolean {
     if (!ensureUnlocked()) {
       uni.showToast({ title: '请先解锁应用', icon: 'none' })
       return false
@@ -45,8 +47,6 @@ export function useDataImport() {
     rawText.value = text
     return runParse()
   }
-
-  // ─── 步骤 2:解析 + 去重检测 ─────────────────────────
 
   function runParse(): boolean {
     const result = parseImport(rawText.value)
@@ -58,8 +58,7 @@ export function useDataImport() {
     }
 
     if (result.items.length > 0) {
-      const existing = (getSecureStorage(VAULT_KEY) || []) as any[]
-      entries.value = detectDuplicates(result.items, existing)
+      entries.value = detectDuplicates(result.items, getExisting())
     }
     else {
       entries.value = []
@@ -69,14 +68,12 @@ export function useDataImport() {
     return true
   }
 
-  // ─── 步骤 3:重复处理 ────────────────────────────────
-
   function setEntryAction(index: number, action: DupAction) {
-    if (entries.value[index]) {
-      entries.value = entries.value.map((e, i) =>
-        i === index ? { ...e, dupAction: action } : e,
-      )
-    }
+    if (!entries.value[index])
+      return
+    entries.value = entries.value.map((e, i) =>
+      i === index ? { ...e, dupAction: action } : e,
+    )
   }
 
   function bulkSetAction(action: DupAction) {
@@ -87,16 +84,13 @@ export function useDataImport() {
     })
   }
 
-  // ─── 步骤 4:入库 ─────────────────────────────────────
-
   function commit() {
     if (!ensureUnlocked()) {
       uni.showToast({ title: '请先解锁应用', icon: 'none' })
       return null
     }
-    const existing = (getSecureStorage(VAULT_KEY) || []) as any[]
-    const { nextList, result } = commitImport(entries.value, existing)
-    setSecureStorage(VAULT_KEY, nextList)
+    const { nextList, result } = commitImport(entries.value, getExisting())
+    setSecureStorage(STORAGE_KEYS.VAULT, nextList)
     step.value = 4
     return result
   }
@@ -111,7 +105,6 @@ export function useDataImport() {
   }
 
   return {
-    // state
     isLocked,
     fileName,
     fileSize,
@@ -119,7 +112,6 @@ export function useDataImport() {
     parseResult,
     entries,
     step,
-    // actions
     loadFromText,
     setEntryAction,
     bulkSetAction,

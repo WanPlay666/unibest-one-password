@@ -1,100 +1,48 @@
 <script lang="ts" setup>
-import { onLoad } from '@dcloudio/uni-app'
-import { computed, provide, reactive, ref } from 'vue'
+import { provide } from 'vue'
 import BottomButton from '@/components/addCategory/BottomButton.vue'
 import FieldGroup from '@/components/addCategory/FieldGroup.vue'
 import FieldItem from '@/components/addCategory/FieldItem.vue'
 import RecordNameCard from '@/components/addCategory/RecordNameCard.vue'
 import RelatedAppsCard from '@/components/addCategory/RelatedAppsCard.vue'
 import Header from '@/components/Header.vue'
+import { useRecordForm } from '@/composables/useRecordForm'
 
-import { useFormEngine } from '@/composables/useFormEngine'
-import { useFormValidation } from '@/composables/useFormValidation'
-import { useRelatedItems } from '@/composables/useRelatedItems'
-// 导入核心引擎
-import { useVaultStore } from '@/composables/useVaultStore'
-import { CATEGORY_MAP } from '@/utils/config'
-import { getFormDataInitial } from '@/utils/importSchema'
+const {
+  formData,
+  isEditMode,
+  fieldRegistry,
+  relatedApps,
+  inputTitle,
+  currentCategory,
+  pageTitle,
+  handleSave,
+} = useRecordForm({
+  type: 'software',
+  title: '软件授权',
+  fieldMapping: (f) => ({
+    account: f.licenseKey || '',
+    nameFallback: f.softwareName || '未命名授权',
+  }),
+})
 
-// 1. 初始化引擎 - 字段清单从 Schema 派生
-const { formData, isEditMode, recordId, init, getRawData } = useFormEngine(getFormDataInitial('software'))
-
-const { items: relatedApps, setItems: setRelatedApps } = useRelatedItems()
-const { saveRecord } = useVaultStore()
-const { validateBase } = useFormValidation()
-
-// 2. 表单注册中心
-const fieldRegistry = reactive(new Map<string, any>())
 provide('formManager', {
-  register: (name: string, meta: any) => fieldRegistry.set(name, meta),
-  update: (name: string, meta: any) => fieldRegistry.set(name, meta),
-  unregister: (name: string) => fieldRegistry.delete(name),
+  register: (name, meta) => fieldRegistry.set(name, meta),
+  update: (name, meta) => fieldRegistry.set(name, meta),
+  unregister: name => fieldRegistry.delete(name),
 })
-
-// 3. 基础 UI 状态
-const title = ref('软件授权')
-const inputTitle = ref('')
-const categoryId = ref('9')
-const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['9'])
-
-onLoad((options: any) => {
-  init(options, (data) => {
-    inputTitle.value = data.name
-    categoryId.value = String(data.categoryId)
-    setRelatedApps(data.relatedApps || [])
-  })
-
-  if (!isEditMode.value && options?.id) {
-    categoryId.value = options.id
-  }
-})
-
-// 4. 保存逻辑
-async function handleSave() {
-  if (!validateBase(fieldRegistry))
-    return
-
-  const latestApps = JSON.parse(JSON.stringify(relatedApps.value))
-
-  const payload = {
-    id: isEditMode.value ? recordId.value : `${Date.now()}`,
-    categoryId: categoryId.value,
-    name: inputTitle.value.trim() || formData.softwareName || '未命名授权',
-    account: formData.value.licenseKey, // 授权码作为主要搜索信息
-    password: '',
-    relatedApps: latestApps,
-    rawData: getRawData(fieldRegistry, latestApps),
-    updatedAt: Date.now(),
-  }
-
-  try {
-    await saveRecord(payload, isEditMode.value, recordId.value)
-    uni.showToast({ title: '授权信息已存入', icon: 'success' })
-    setTimeout(() => uni.navigateBack(), 800)
-  }
-  catch (e) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
-  }
-}
 </script>
 
 <template>
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
-    <Header :title="isEditMode ? '编辑授权' : title" fixed @back="uni.navigateBack()" />
-
+    <Header :title="isEditMode ? '编辑授权' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-6 py-4">
       <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 办公软件)" />
 
       <FieldGroup>
-        <FieldItem v-model="formData.softwareName" name="softwareName" label="软件名称" placeholder="请输入软件名称" />
-        <FieldItem
-          v-model="formData.licenseKey" name="licenseKey" label="激活码"
-          placeholder="License Key / Serial Number"
-        />
-        <FieldItem
-          v-model="formData.limitation" name="limitation" label="限制条件" placeholder="如: 3台设备 / 永久授权"
-          is-last
-        />
+        <FieldItem v-model="formData.softwareName" name="softwareName" label="软件名称" required placeholder="请输入软件名称" />
+        <FieldItem v-model="formData.licenseKey" name="licenseKey" label="激活码" placeholder="License Key / Serial Number" />
+        <FieldItem v-model="formData.limitation" name="limitation" label="限制条件" placeholder="如: 3台设备 / 永久授权" is-last />
       </FieldGroup>
 
       <RelatedAppsCard v-model="relatedApps" />

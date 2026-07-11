@@ -10,7 +10,7 @@ import Step1Intro from '@/components/DataImport/Step1Intro.vue'
 import StepIndicator from '@/components/DataImport/StepIndicator.vue'
 import TemplateSheet from '@/components/DataImport/TemplateSheet.vue'
 import { useDataImport } from '@/composables/useDataImport'
-import { buildImportTemplate } from '@/utils/importSchema'
+import { buildImportTemplate } from '@/utils/importSchema.template'
 
 definePage({
   style: { navigationStyle: 'custom' },

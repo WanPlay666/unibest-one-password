@@ -7,6 +7,7 @@ import Header from '@/components/Header.vue'
 import { useAuthStore } from '@/store/auth'
 import { deriveAESKey, decryptData, encryptData, generateSalt, hashMasterPassword } from '@/utils/crypto'
 import { getStorage, setStorage } from '@/utils/storage'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
 
 definePage({
   style: { navigationStyle: 'custom' },
@@ -64,7 +65,7 @@ function handleSave() {
 
     // 3. 用旧密钥解密所有记录
     const oldAesKey = deriveAESKey(oldPassword, oldSalt)
-    const encryptedVault = uni.getStorageSync('ENCRYPTED_VAULT')
+    const encryptedVault = uni.getStorageSync(STORAGE_KEYS.VAULT)
     let vaultData: any = []
     if (encryptedVault) {
       vaultData = decryptData(encryptedVault, oldAesKey)
@@ -82,7 +83,7 @@ function handleSave() {
     setStorage('APP_SALT', newSalt)
     setStorage('MASTER_HASH', newHash)
     if (newEncryptedVault) {
-      setStorage('ENCRYPTED_VAULT', newEncryptedVault)
+      setStorage(STORAGE_KEYS.VAULT, newEncryptedVault)
     }
 
     // 7. 更新内存密钥

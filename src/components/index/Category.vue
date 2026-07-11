@@ -31,9 +31,9 @@ interface CategoryItem {
     </view>
 
     <!-- 网格布局：3列，间距根据图片比例微调 -->
-    <view class="grid grid-cols-3 gap-x-4 gap-y-5">
+    <view class="grid grid-cols-3 gap-x-2 gap-y-2">
       <view v-for="item in categories" :key="item.id"
-        class="aspect-square flex flex-col items-center justify-center b-1 border-white/10 rounded-[28px] b-solid bg-[#1A1A1A] transition-all duration-200 active:bg-[#1a1a1a]"
+        class="aspect-square flex flex-col items-center justify-center b-1 border-white/10 rounded-[18px] b-solid bg-[#1A1A1A] transition-all duration-200 active:bg-[#1a1a1a]"
         @tap="emit('click', item)">
         <!-- 彩色图标容器：高度还原图片的圆角和色彩感 -->
         <view class="mb-3 h-10 w-10 flex items-center justify-center rounded-full shadow-black/40 shadow-md" :class="[

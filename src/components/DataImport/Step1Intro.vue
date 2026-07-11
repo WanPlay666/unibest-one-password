@@ -20,8 +20,8 @@ const emit = defineEmits<{
 
     <view class="mb-3 flex items-center justify-center gap-2 overflow-hidden rounded-[18px] py-3"
       :style="{ backgroundColor: THEME }" @tap="emit('open-paste')">
-      <view class="i-carbon-text-annotation-toggle text-base text-black" />
-      <text class="text-sm text-black ">粘贴 JSON 内容</text>
+      <view class="i-carbon-text-annotation-toggle text-base text-white" />
+      <text class="text-sm text-white font-bold">粘贴 JSON 内容</text>
     </view>
 
     <view class="flex items-center justify-center gap-1 rounded-[16px] border border-white/10 bg-white/5 py-2.5"

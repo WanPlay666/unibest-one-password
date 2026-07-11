@@ -1,29 +1,36 @@
 import { ref } from 'vue'
+import type { NormalizedItem } from '@/utils/importSchema'
 
-export function useFormEngine<T extends Record<string, any>>(initialState: T) {
+export interface FormInitOptions {
+  /** onLoad 传入的页面参数 */
+  options?: Record<string, any>
+  /** 编辑回显就绪后回调(用于回填非通用字段) */
+  onReady?: (data: NormalizedItem) => void
+}
+
+/**
+ * 表单引擎:封装 formData 状态 + 编辑模式回显 + 详情页自描述 rawData。
+ * 不再吃 `any`:options 是 Record<string, any>,data 是 NormalizedItem。
+ */
+export function useFormEngine<T extends Record<string, string>>(initialState: T) {
   const formData = ref<T>({ ...initialState })
   const isEditMode = ref(false)
-  const recordId = ref('')
+  const recordId = ref<string | number>('')
 
-  // 职责：一键解析并初始化数据
-  const init = (options: any, onReady?: (data: any) => void) => {
+  const init = (options: Record<string, any> | undefined, onReady?: (data: NormalizedItem) => void) => {
     if (options?.data) {
       try {
-        const data = JSON.parse(decodeURIComponent(options.data))
+        const data = JSON.parse(decodeURIComponent(options.data)) as NormalizedItem
         isEditMode.value = true
         recordId.value = data.id
 
-        // 将数组转为 Map 提高回显查找效率
-        const dataMap = (data.rawData || []).reduce((acc: any, cur: any) => {
-          acc[cur.key] = cur.value
-          return acc
-        }, {})
+        const dataMap: Record<string, any> = {}
+        for (const f of data.rawData || [])
+          dataMap[f.key] = f.value
 
-        // 声明式回显：自动匹配字段
-        Object.keys(initialState).forEach((key) => {
-          // 逻辑优先级：根节点同名属性 > rawData 存储属性 > 初始值
-          (formData.value as any)[key] = data[key] ?? dataMap[key] ?? initialState[key]
-        })
+        for (const key of Object.keys(initialState)) {
+          ;(formData.value as any)[key] = data[key as keyof NormalizedItem] ?? dataMap[key] ?? initialState[key]
+        }
 
         onReady?.(data)
       }
@@ -33,8 +40,7 @@ export function useFormEngine<T extends Record<string, any>>(initialState: T) {
     }
   }
 
-  // 职责：构建详情页自描述数组
-  const getRawData = (fieldRegistry: Map<string, any>, relatedApps: any[]) => {
+  const getRawData = (fieldRegistry: Map<string, any>, relatedApps: Array<{ value: string }>) => {
     const fields = Array.from(fieldRegistry.values())
       .filter(f => f.value)
       .map(f => ({ key: f.name, label: f.label, value: f.value }))

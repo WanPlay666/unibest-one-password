@@ -14,18 +14,23 @@ function getSessionKey(): string {
 }
 
 /**
- * 安全存入本地缓存
+ * 安全存入本地缓存。
+ * 返回 `true` 表示写入成功,`false` 表示失败(无钥匙 / 加密失败 / 存储失败)。
+ * 业务层可以根据返回值决定是否回滚 UI 状态或提示用户。
  */
-export function setSecureStorage(key: string, data: any): void {
+export function setSecureStorage(key: string, data: any): boolean {
   try {
     const aesKey = getSessionKey()
     const ciphertext = encryptData(data, aesKey)
     if (ciphertext) {
       uni.setStorageSync(key, ciphertext)
+      return true
     }
+    return false
   }
   catch (error) {
     console.error(`安全存储 [${key}] 失败:`, error)
+    return false
   }
 }
 

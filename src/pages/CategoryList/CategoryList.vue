@@ -2,12 +2,15 @@
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import DetailCopySheet from '@/components/DetailCopySheet.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
 import Header from '@/components/Header.vue'
 import SearchBar from '@/components/index/SearchBar.vue'
-import { CATEGORY_ROUTE_MAP } from '@/utils/config' // 引入配置
+import { CATEGORY_ROUTE_MAP } from '@/utils/config'
 import { buildDetailList } from '@/utils/itemDetail'
-import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
+import { getSecureStorage } from '@/utils/secureStorage'
+import { STORAGE_KEYS } from '@/utils/storageKeys'
+import { useVaultStore } from '@/composables/useVaultStore'
 
 // 状态定义
 const pageTitle = ref('分类列表')
@@ -17,11 +20,10 @@ const allItems = ref([])
 const showDetail = ref(false)
 const activeItem = ref<any>(null)
 
-/**
- * 详情页数据:从 rawData + 顶层 account/password/relatedApps 合并去重
- */
+const { deleteRecord } = useVaultStore()
+
 const activeDetailList = computed(() => buildDetailList(activeItem.value))
-// 生命周期
+
 onLoad((options: any) => {
   if (options.title)
     pageTitle.value = options.title
@@ -34,7 +36,7 @@ onShow(() => {
 })
 
 function loadData() {
-  const list = getSecureStorage('ENCRYPTED_VAULT') || []
+  const list = getSecureStorage(STORAGE_KEYS.VAULT) || []
   let filtered = list
   if (categoryId.value) {
     filtered = list.filter((item: any) => String(item.categoryId) === String(categoryId.value))
@@ -43,14 +45,12 @@ function loadData() {
   accountItems.value = filtered
 }
 
-// 核心修改：动态编辑跳转逻辑
 function handleEdit() {
   if (!activeItem.value)
     return
   showDetail.value = false
 
   const targetPath = CATEGORY_ROUTE_MAP[String(categoryId.value)]
-
   const dataString = encodeURIComponent(JSON.stringify(activeItem.value))
 
   uni.navigateTo({
@@ -58,7 +58,6 @@ function handleEdit() {
   })
 }
 
-// 其他交互逻辑
 function handleBack() {
   uni.navigateBack()
 }
@@ -76,16 +75,13 @@ function handleInput(value: string) {
 }
 
 function handleConfirmDelete(item: any) {
-  const list = getSecureStorage('ENCRYPTED_VAULT') || []
-  const updatedList = list.filter((i: any) => i.id !== item.id)
-  try {
-    setSecureStorage('ENCRYPTED_VAULT', updatedList)
-    accountItems.value = accountItems.value.filter((i: any) => i.id !== item.id)
-    uni.showToast({ title: '删除成功', icon: 'success' })
+  const ok = deleteRecord(item.id)
+  if (!ok) {
+    uni.showToast({ title: '删除失败,请重试', icon: 'none' })
+    return
   }
-  catch (e) {
-    uni.showToast({ title: '删除失败', icon: 'none' })
-  }
+  accountItems.value = accountItems.value.filter((i: any) => i.id !== item.id)
+  uni.showToast({ title: '删除成功', icon: 'success' })
 }
 
 function handleDetail(item: any) {
@@ -107,11 +103,9 @@ function handleQuickEdit(item: any) {
 
       <FavoriteList
         v-if="accountItems.length > 0" :list="accountItems" @click="handleDetail" @edit="handleQuickEdit"
-        @delete="handleConfirmDelete"
+        @delete="handleConfirmDelete" @refresh="loadData"
       />
-      <view v-else class="mt-20 text-center text-sm text-gray-500">
-        暂无数据记录
-      </view>
+      <EmptyState v-else text="暂无数据记录" />
     </view>
 
     <DetailCopySheet
