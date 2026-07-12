@@ -28,7 +28,7 @@ const securityInfo: SecurityInfo[] = [
   <view class="min-h-screen bg-[#050508] text-white pt-safe pb-safe">
     <Header title="安全设置" @back="uni.navigateBack()" />
 
-    <view class="px-6">
+    <view class="px-5">
       <view class="mb-6 mt-8 flex flex-col items-center">
         <view
           class="mb-4 h-16 w-16 flex items-center justify-center rounded-2xl border border-blue-500/30 bg-blue-500/10">

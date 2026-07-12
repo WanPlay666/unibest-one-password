@@ -101,7 +101,7 @@ function handleSave() {
 </script>
 
 <template>
-  <view class="box-border bg-[#050508] px-6 text-white pt-safe pb-safe min-h-screen">
+  <view class="box-border bg-[#050508] px-5 text-white pt-safe pb-safe min-h-screen">
     <Header title="修改主密码" @back="uni.navigateBack()" />
 
     <view class="mb-8 mt-6 flex flex-col items-center text-center">

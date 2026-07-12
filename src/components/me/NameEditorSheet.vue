@@ -35,7 +35,7 @@ function handleConfirm() {
     v-if="show" class="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60"
     @click="emit('close')"
   >
-    <view class="w-full rounded-t-3xl bg-[#1A1A1A] px-6 pb-10 pt-6" @click.stop>
+    <view class="w-full rounded-t-3xl bg-[#1A1A1A] px-5 pb-10 pt-6" @click.stop>
       <text class="mb-6 block text-center text-lg font-bold text-white">修改昵称</text>
 
       <view

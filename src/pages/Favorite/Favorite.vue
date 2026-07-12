@@ -100,15 +100,15 @@ async function handleConfirmDelete(item: RecordItem) {
   <view class="text-white">
     <Header title="收藏夹" :show-left="false" fixed />
 
-    <view class="px-6 py-4">
-      <SearchBar fixed :offset-top="88" bg-color="#050508" @search="handleInput" />
+    <SearchBar bg-color="#050508" @search="handleInput" fixed />
 
+    <scroll-view class="px-5  box-border pb-safe" scroll-y>
       <FavoriteList v-if="filteredData.length > 0" :list="filteredData as any" @click="handleItemCopy"
         @edit="handleItemEdit" @delete="handleConfirmDelete" @refresh="handleRefresh" />
       <EmptyState v-else text="暂无收藏记录" />
 
       <DetailCopySheet :show="showDetail" :title="activeItem ? `${activeItem.name} 详情` : '详情'" :data="activeDetailList"
         @close="showDetail = false" />
-    </view>
+    </scroll-view>
   </view>
 </template>

@@ -7,12 +7,11 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   text: '暂无数据',
-  pad: 'py-20',
 })
 </script>
 
 <template>
-  <view :class="['text-center text-sm text-white/30', pad]">
+  <view :class="['text-center text-sm text-white/30 pt-30']">
     {{ text }}
   </view>
 </template>

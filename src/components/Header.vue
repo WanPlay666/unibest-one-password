@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed, getCurrentInstance, onMounted } from 'vue'
+import { useLayoutStore } from '@/store/layout'
 import { safeAreaInsets, systemInfo } from '@/utils/systemInfo'
 
 interface Props {
@@ -52,6 +53,25 @@ const totalHeight = computed(() => {
   const top = props.showStatusBar ? statusBarHeight.value : 0
   return top + navInfo.value.contentHeight
 })
+
+// 3. mount 后把自身"固定模式"占用的实际高度写入 layout store,
+// SearchBar 等浮动元素可以自动拿到,不用再传 :offset-top="88"。
+const instance = getCurrentInstance()
+const layoutStore = useLayoutStore()
+
+onMounted(() => {
+  if (!props.fixed)
+    return
+  // 找到 .nav-container 的实际渲染高度(已含状态栏 + 标题栏)
+  uni.createSelectorQuery()
+    .in(instance)
+    .select('.nav-container')
+    .boundingClientRect((res: any) => {
+      if (res && res.height)
+        layoutStore.setHeaderHeight(res.height)
+    })
+    .exec()
+})
 </script>
 
 <template>
@@ -68,7 +88,7 @@ const totalHeight = computed(() => {
           <template v-if="showLeft">
             <slot name="left">
               <view
-                class="h-12 w-12 flex cursor-pointer items-center justify-center transition-opacity -ml-3 active:bg-[#1A1A1A]"
+                class="h-10 w-10 flex cursor-pointer items-center justify-center transition-opacity -ml-3 active:bg-[#1A1A1A]"
                 @click="emit('back')">
                 <view class="i-carbon-chevron-left text-2xl text-gray-300" />
               </view>

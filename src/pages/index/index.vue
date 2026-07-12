@@ -97,11 +97,11 @@ function onManualLock() {
 
 <template>
   <view class="pt-safe">
-    <view class="bg-[#000000f2] px-6">
+    <view class="bg-[#000000f2] px-5">
       <TopBar @add="handleAddCategory" @lock="onManualLock" />
     </view>
 
-    <view class="mt-6 px-6">
+    <view class="mt-6 px-5">
       <CategoryGrid :categories="categoryList" @click="handleCategoryClick" />
     </view>
   </view>

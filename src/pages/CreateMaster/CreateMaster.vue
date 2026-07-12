@@ -73,7 +73,7 @@ function handleCreate() {
 </script>
 
 <template>
-  <view class="box-border bg-[#050508] px-6 text-white pt-safe pb-safe">
+  <view class="box-border bg-[#050508] px-5 text-white pt-safe pb-safe">
     <Header title="设置主密码" :show-left="false" />
 
     <view class="mb-10 mt-8 flex flex-col items-center justify-center text-center">

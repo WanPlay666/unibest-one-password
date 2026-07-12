@@ -50,7 +50,7 @@ provide('formManager', {
   <view class="bg-[#050508] text-white">
     <Header :title="isEditMode ? '编辑银行卡' : pageTitle" fixed @back="uni.navigateBack()" />
 
-    <view class="px-6 py-4">
+    <view class="px-5 py-4">
       <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 招商工资卡)" />
 
       <FieldGroup>

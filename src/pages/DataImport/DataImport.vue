@@ -132,7 +132,7 @@ function handleBack() {
   <view class="min-h-screen bg-[#050508] text-white pt-safe pb-safe">
     <Header title="导入数据" fixed @back="handleBack" />
 
-    <view class="px-6 py-16">
+    <view class="px-5 py-16">
       <StepIndicator :step="step" />
 
       <Step1Intro v-if="step === 1" @open-paste="openPaste" @open-template="openTemplate" />

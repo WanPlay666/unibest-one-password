@@ -37,7 +37,7 @@ provide('formManager', {
 <template>
   <view class="bg-[#050508] text-white">
     <Header :title="isEditMode ? '编辑医疗社保' : pageTitle" fixed @back="uni.navigateBack()" />
-    <view class="px-6 py-4">
+    <view class="px-5 py-4">
       <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 个人社保)" />
 
       <FieldGroup>

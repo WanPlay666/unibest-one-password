@@ -4,7 +4,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  text: '完成创建',
+  text: '完成',
 })
 
 const emit = defineEmits<{

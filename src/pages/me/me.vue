@@ -114,12 +114,12 @@ function confirmClearAll() {
 </script>
 
 <template>
-  <view class="min-h-screen bg-[#050508] pt-safe text-white pb-safe">
+  <view class="min-h-screen bg-[#050508]  text-white ">
     <UserProfile :name="profile.name" @edit="showNameEditor = true" />
 
-    <view class="flex flex-col gap-8 px-6">
-      <MenuGroup v-for="group in menuGroups" :key="group[0].id" :items="group"
-        :biometric-enabled="isBiometricEnabled" @action="handleAction" @biometric-change="handleBiometricChange" />
+    <view class="flex flex-col gap-8 px-5">
+      <MenuGroup v-for="group in menuGroups" :key="group[0].id" :items="group" :biometric-enabled="isBiometricEnabled"
+        @action="handleAction" @biometric-change="handleBiometricChange" />
     </view>
 
     <NameEditorSheet :show="showNameEditor" :current-name="profile.name" @close="showNameEditor = false"

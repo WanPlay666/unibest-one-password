@@ -96,21 +96,23 @@ function handleQuickEdit(item: any) {
 </script>
 
 <template>
-  <view class="min-h-screen bg-[#050508] text-white pt-safe pb-safe">
-    <Header :title="pageTitle" fixed @back="handleBack" />
-    <view class="px-6">
-      <SearchBar fixed :offset-top="88" bg-color="#050508" @search="handleInput" />
+  <view class="min-h-screen bg-[#050508] text-white">
+    <Header :title="pageTitle" @back="handleBack" fixed />
 
-      <FavoriteList
-        v-if="accountItems.length > 0" :list="accountItems" @click="handleDetail" @edit="handleQuickEdit"
-        @delete="handleConfirmDelete" @refresh="loadData"
-      />
+    <SearchBar bg-color="#050508" @search="handleInput" fixed />
+
+    <scroll-view class="px-5  box-border pb-safe" scroll-y>
+      <FavoriteList v-if="accountItems.length > 0" :list="accountItems" @click="handleDetail" @edit="handleQuickEdit"
+        @delete="handleConfirmDelete" @refresh="loadData" />
       <EmptyState v-else text="暂无数据记录" />
-    </view>
+    </scroll-view>
 
-    <DetailCopySheet
-      :show="showDetail" :title="`${activeItem?.name || ''} 详情`" :data="activeDetailList"
-      @close="showDetail = false" @edit="handleEdit"
-    />
+    <DetailCopySheet :show="showDetail" :title="`${activeItem?.name || ''} 详情`" :data="activeDetailList"
+      @close="showDetail = false" @edit="handleEdit" />
   </view>
 </template>
+<style scoped>
+.hh {
+  height: calc(100vh - 120px);
+}
+</style>

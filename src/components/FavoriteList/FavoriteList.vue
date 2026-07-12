@@ -97,26 +97,19 @@ function handleTouchEnd() { activeIndex.value = null }
 </script>
 
 <template>
-  <view class="border-white-5 overflow-hidden border rounded-[16px] bg-hex-121212">
+  <view class="flex flex-col gap-2">
     <SwipeActionItem v-for="(item, index) in list" :key="item.id" :actions="getActions(item)">
-      <view
-        class="flex items-center px-2 py-2" :class="[
-          activeIndex === index ? 'bg-white-10' : 'bg-transparent',
-          index !== list.length - 1 ? 'border-b border-white-5' : '',
-        ]" @click="emit('click', item)"
-      >
+      <view class="flex items-center overflow-hidden rounded-[16px] bg-[#1A1A1A] px-2 py-2" :class="[
+        activeIndex === index ? 'bg-white-10' : '',
+      ]" @click="emit('click', item)">
         <view class="relative shrink-0">
-          <view
-            class="h-12 w-12 flex items-center justify-center rounded-2xl"
-            :class="[getVisual(item.categoryId).color]"
-          >
+          <view class="h-12 w-12 flex items-center justify-center rounded-2xl"
+            :class="[getVisual(item.categoryId).color]">
             <view class="text-sm text-white" :class="[getVisual(item.categoryId).icon]" />
           </view>
 
-          <view
-            v-if="item.isFavorite"
-            class="absolute h-5 w-5 flex items-center justify-center border-2 border-hex-121212 rounded-full bg-hex-ffd700 -right-1 -top-1"
-          >
+          <view v-if="item.isFavorite"
+            class="absolute h-5 w-5 flex items-center justify-center border-2 border-hex-121212 rounded-full bg-hex-ffd700 -right-1 -top-1">
             <view class="i-carbon-star-filled text-[10px] text-black" />
           </view>
         </view>

@@ -57,7 +57,7 @@ const safeData = computed(() => {
     />
 
     <view
-      class="sheet-content pb-safe-bottom relative flex flex-col border-t border-white/10 rounded-t-[32px] bg-[#1A1A1A] px-6 pt-6 transition-transform duration-300"
+      class="sheet-content pb-safe-bottom relative flex flex-col border-t border-white/10 rounded-t-[32px] bg-[#1A1A1A] px-5 pt-6 transition-transform duration-300"
       :style="{
         height: '75vh',
         transform: show ? 'translateY(0)' : 'translateY(100%)',

@@ -32,7 +32,7 @@ function handleCategorySelect(item: any) {
   <view class="pt-safe" :style="{ paddingTop: `${safeAreaInsets?.top}px` }">
     <Header title="选择分类" fixed :show-left="false" />
 
-    <view class="grid grid-cols-3 mt-10 content-start gap-x-4 gap-y-12 px-6">
+    <view class="grid grid-cols-3 mt-10 content-start gap-x-4 gap-y-12 px-5">
       <view
         v-for="item in CATEGORY_MAP" :key="item.title" class="flex flex-col items-center"
         @click="handleCategorySelect(item)"

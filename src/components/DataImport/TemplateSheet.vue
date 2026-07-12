@@ -17,13 +17,13 @@ const emit = defineEmits<{
 
 <template>
   <view v-if="show" class="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60" @click="emit('close')">
-    <view class="flex w-full max-h-[85vh] flex-col rounded-t-3xl bg-[#1A1A1A] px-6 pb-10 pt-6" @click.stop>
+    <view class="flex w-full max-h-[85vh] flex-col rounded-t-3xl bg-[#1A1A1A] px-5 pb-10 pt-6" @click.stop>
       <text class="mb-1 block text-center text-lg text-white font-bold">导入模版示例</text>
       <text class="mb-4 block text-center text-sm text-gray-500">覆盖 9 种 type 的字段结构,可作为填写参考</text>
 
       <scroll-view scroll-y class="mb-4 box-border rounded-[16px] border border-white/10 bg-[#050508] p-2"
         style="height: 50vh; min-height: 280px;">
-        <text class="whitespace-pre-wrap text-sm text-[#7fb8ff] font-mono">{{ template }}</text>
+        <text class="whitespace-pre-wrap text-[11px] text-blue-400 font-mono">{{ template }}</text>
       </scroll-view>
 
       <view class="flex flex-row gap-2">
@@ -32,8 +32,7 @@ const emit = defineEmits<{
           @click="emit('copy')">
           复制全文
         </button>
-        <button
-          class="flex-1 rounded-[18px] border-none py-3 text-sm text-white font-bold active:scale-[0.97]"
+        <button class="flex-1 rounded-[18px] border-none py-3 text-sm text-white font-bold active:scale-[0.97]"
           :style="{ backgroundColor: THEME }" @click="emit('use')">
           体验导入
         </button>

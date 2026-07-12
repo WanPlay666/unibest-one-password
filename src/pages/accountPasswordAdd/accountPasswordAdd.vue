@@ -106,7 +106,7 @@ async function handleSave() {
   <view class="bg-[#050508] text-white">
     <Header :title="isEditMode ? '编辑记录' : '新增账号'" fixed @back="uni.navigateBack()" />
 
-    <view class="px-6 py-4">
+    <view class="px-5 py-4">
       <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" />
 
       <FieldGroup>

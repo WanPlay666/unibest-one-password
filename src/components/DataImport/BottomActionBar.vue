@@ -18,7 +18,7 @@ const emit = defineEmits<{
 
 <template>
   <view v-if="step !== 4"
-    class="fixed bottom-0 left-0 right-0 border-t border-white/5 bg-[#050508]/95 backdrop-blur px-6 pb-safe pt-3">
+    class="fixed bottom-0 left-0 right-0 border-t border-white/5 bg-[#050508]/95 backdrop-blur px-5 pb-safe pt-3">
     <view v-if="step === 1" class="py-2 text-center text-[11px] text-gray-600">
       点击上方按钮粘贴 JSON 或查看示例
     </view>
