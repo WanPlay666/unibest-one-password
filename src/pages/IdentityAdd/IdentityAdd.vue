@@ -70,7 +70,7 @@ provide('formManager', {
         </FieldGroup>
       </view>
       <RelatedAppsCard v-model="relatedApps" />
-      <BottomButton @save="handleSave" />
+      <BottomButton :loading="isSaving" @save="handleSave" />
     </view>
   </view>
 </template>

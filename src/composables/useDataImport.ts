@@ -89,10 +89,17 @@ export function useDataImport() {
       uni.showToast({ title: '请先解锁应用', icon: 'none' })
       return null
     }
-    const { nextList, result } = commitImport(entries.value, getExisting())
-    setSecureStorage(STORAGE_KEYS.VAULT, nextList)
-    step.value = 4
-    return result
+    const total = entries.value.length
+    uni.showLoading({ title: total > 0 ? `正在导入 ${total} 条...` : '正在导入...' })
+    try {
+      const { nextList, result } = commitImport(entries.value, getExisting())
+      setSecureStorage(STORAGE_KEYS.VAULT, nextList)
+      step.value = 4
+      return result
+    }
+    finally {
+      uni.hideLoading()
+    }
   }
 
   function reset() {

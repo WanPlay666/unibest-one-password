@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { CATEGORY_MAP } from '@/utils/config'
 import { getSecureStorage, setSecureStorage } from '@/utils/secureStorage'
 import { STORAGE_KEYS } from '@/utils/storageKeys'
@@ -31,6 +31,11 @@ function getVisual(catId: string | number) {
   return { icon: cfg?.icon || 'i-carbon-document', color: cfg?.color || 'bg-gray-600' }
 }
 
+// 给每条 item 一次性算好视觉属性,避免模板里同一 catId 调用两次 getVisual
+const enrichedList = computed(() =>
+  list.map(item => ({ ...item, visual: getVisual(item.categoryId) })),
+)
+
 async function toggleFavorite(item: Item) {
   // 1. 先确定目标状态(不改 UI,等 storage 写回成功再改)
   const newState = !item.isFavorite
@@ -46,6 +51,10 @@ async function toggleFavorite(item: Item) {
     }
 
     records[index].isFavorite = newState
+    if (newState)
+      records[index].favoritedAt = Date.now()
+    else
+      delete records[index].favoritedAt
     const ok = setSecureStorage(STORAGE_KEY, records)
     if (!ok) {
       uni.showToast({ title: '收藏状态保存失败', icon: 'none' })
@@ -54,6 +63,10 @@ async function toggleFavorite(item: Item) {
 
     // 3. storage 写回成功,才更新 UI
     item.isFavorite = newState
+    if (newState)
+      item.favoritedAt = Date.now()
+    else
+      delete item.favoritedAt
     uni.showToast({
       title: newState ? '已加入收藏' : '已取消收藏',
       icon: 'none',
@@ -98,14 +111,14 @@ function handleTouchEnd() { activeIndex.value = null }
 
 <template>
   <view class="flex flex-col gap-2">
-    <SwipeActionItem v-for="(item, index) in list" :key="item.id" :actions="getActions(item)">
+    <SwipeActionItem v-for="(item, index) in enrichedList" :key="item.id" :actions="getActions(item)">
       <view class="flex items-center overflow-hidden rounded-[16px] bg-[#1A1A1A] px-2 py-2" :class="[
         activeIndex === index ? 'bg-white-10' : '',
       ]" @click="emit('click', item)">
         <view class="relative shrink-0">
           <view class="h-12 w-12 flex items-center justify-center rounded-2xl"
-            :class="[getVisual(item.categoryId).color]">
-            <view class="text-sm text-white" :class="[getVisual(item.categoryId).icon]" />
+            :class="[item.visual.color]">
+            <view class="text-sm text-white" :class="[item.visual.icon]" />
           </view>
 
           <view v-if="item.isFavorite"

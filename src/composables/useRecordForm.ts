@@ -61,6 +61,7 @@ export function useRecordForm(options: UseRecordFormOptions) {
   const inputTitle = ref('')
   const categoryId = ref(fallbackCategoryId)
   const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP[fallbackCategoryId])
+  const isSaving = ref(false)
 
   // 6. 字段注册中心(由 FieldItem 自动注册)
   const fieldRegistry = reactive(new Map<string, any>())
@@ -79,26 +80,34 @@ export function useRecordForm(options: UseRecordFormOptions) {
 
   // 8. 保存流程
   async function handleSave(): Promise<boolean> {
+    if (isSaving.value)
+      return false
     if (!validateBase(fieldRegistry))
       return false
     if (extraValidate && !extraValidate())
       return false
 
-    const finalRelatedApps = JSON.parse(JSON.stringify(relatedApps.value))
-    const rawData = getRawData(fieldRegistry, finalRelatedApps)
-    const mapping = fieldMapping(formData.value as Record<string, string>)
-    const name = inputTitle.value.trim() || mapping.nameFallback || schema?.defaultName || '未命名记录'
+    isSaving.value = true
+    try {
+      const finalRelatedApps = JSON.parse(JSON.stringify(relatedApps.value))
+      const rawData = getRawData(fieldRegistry, finalRelatedApps)
+      const mapping = fieldMapping(formData.value as Record<string, string>)
+      const name = inputTitle.value.trim() || mapping.nameFallback || schema?.defaultName || '未命名记录'
 
-    const payload: RecordPayload = {
-      categoryId: categoryId.value,
-      name,
-      account: mapping.account,
-      password: mapping.password || '',
-      relatedApps: finalRelatedApps,
-      rawData,
+      const payload: RecordPayload = {
+        categoryId: categoryId.value,
+        name,
+        account: mapping.account,
+        password: mapping.password || '',
+        relatedApps: finalRelatedApps,
+        rawData,
+      }
+
+      return await trySave(payload, isEditMode.value, recordId.value)
     }
-
-    return trySave(payload, isEditMode.value, recordId.value)
+    finally {
+      isSaving.value = false
+    }
   }
 
   return {
@@ -112,6 +121,7 @@ export function useRecordForm(options: UseRecordFormOptions) {
     categoryId,
     currentCategory,
     pageTitle,
+    isSaving,
     handleSave,
   }
 }

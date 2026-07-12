@@ -45,6 +45,7 @@ function handleSave() {
 
   if (isSaving.value) return
   isSaving.value = true
+  uni.showLoading({ title: '正在重新加密...' })
 
   try {
     // 1. 读取本地盐和哈希
@@ -89,6 +90,7 @@ function handleSave() {
     // 7. 更新内存密钥
     authStore.setAESKey(newAesKey)
 
+    uni.hideLoading()
     uni.showToast({ title: '主密码修改成功', icon: 'success' })
     setTimeout(() => uni.navigateBack(), 1000)
   }
@@ -96,6 +98,7 @@ function handleSave() {
     console.error('修改密码异常:', error)
     uni.showToast({ title: '修改失败，请重试', icon: 'none' })
     isSaving.value = false
+    uni.hideLoading()
   }
 }
 </script>
@@ -128,7 +131,7 @@ function handleSave() {
     </FieldGroup>
 
     <view class="mt-6">
-      <BottomButton text="确认修改" @save="handleSave" />
+      <BottomButton :loading="isSaving" text="确认修改" @save="handleSave" />
     </view>
   </view>
 </template>

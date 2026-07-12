@@ -25,6 +25,7 @@ const { validateBase } = useFormValidation()
 
 const categoryId = ref('1')
 const inputTitle = ref('')
+const isSaving = ref(false)
 
 // 动态 UI 表现 (不参与存储)
 const currentCategory = computed(() => CATEGORY_MAP[categoryId.value] || CATEGORY_MAP['1'])
@@ -73,8 +74,11 @@ function validate(): boolean {
  * 职责：执行保存
  */
 async function handleSave() {
+  if (isSaving.value)
+    return
   if (!validate())
     return
+  isSaving.value = true
 
   // 获取最新的相关应用快照，确保响应式数据已同步
   const finalRelatedApps = JSON.parse(JSON.stringify(relatedApps.value))
@@ -99,6 +103,9 @@ async function handleSave() {
   catch (e) {
     uni.showToast({ title: '保存失败', icon: 'none' })
   }
+  finally {
+    isSaving.value = false
+  }
 }
 </script>
 
@@ -122,7 +129,7 @@ async function handleSave() {
 
       <RelatedAppsCard v-model="relatedApps" />
 
-      <BottomButton @save="handleSave" />
+      <BottomButton :loading="isSaving" @save="handleSave" />
     </view>
   </view>
 </template>

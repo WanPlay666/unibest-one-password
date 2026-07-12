@@ -33,16 +33,20 @@ function handleUnlock() {
 
   if (inputHash === localHash.value) {
     isError.value = false
+    uni.showLoading({ title: '正在解锁...' })
+
+    // 核心:重新派生出真正的 AES 密钥放入内存(大保险箱时 PBKDF2 + 解密可能耗时)
+    try {
+      const aesKey = deriveAESKey(password.value, localSalt.value)
+      authStore.setAESKey(aesKey)
+    }
+    finally {
+      uni.hideLoading()
+    }
+
     uni.showToast({ title: '解锁成功', icon: 'success' })
-
-    // 核心：重新派生出真正的 AES 密钥放入内存
-    const aesKey = deriveAESKey(password.value, localSalt.value)
-    authStore.setAESKey(aesKey)
-
-    setTimeout(() => {
-      password.value = ''
-      uni.reLaunch({ url: '/pages/index/index' })
-    }, 500)
+    password.value = ''
+    uni.reLaunch({ url: '/pages/index/index' })
   }
   else {
     isError.value = true

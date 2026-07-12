@@ -51,13 +51,16 @@ function fetchCategoryCounts() {
       count: 0,
     }))
 
-    // 统计逻辑
-    allRecords.forEach((record: any) => {
-      const matchedCategory = newList.find(c => String(c.id) === String(record.categoryId))
-      if (matchedCategory) {
-        matchedCategory.count += 1
-      }
-    })
+    // 用 Map 索引,O(1) 查找,把原来的 O(n*m) 降到 O(n+m)
+    const byId = new Map<string, typeof newList[number]>()
+    for (const c of newList)
+      byId.set(String(c.id), c)
+
+    for (const record of allRecords as any[]) {
+      const matched = byId.get(String(record.categoryId))
+      if (matched)
+        matched.count += 1
+    }
 
     categoryList.value = newList
   }

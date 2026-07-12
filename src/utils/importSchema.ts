@@ -241,6 +241,8 @@ export interface NormalizedItem {
   fingerprint: string
   // 原始 rawData 也可能携带,这里单独保留
   isFavorite?: boolean
+  // 收藏时间(毫秒时间戳)。未收藏或老数据缺失时为 undefined,排序时兜底为 createdAt
+  favoritedAt?: number
 }
 
 export interface InvalidItem {
@@ -393,6 +395,7 @@ export function normalizeItem(raw: any): { ok: true, item: NormalizedItem } | { 
     updatedAt,
     fingerprint: buildFingerprint(resolved.categoryId, name, account),
     isFavorite: !!raw.isFavorite,
+    favoritedAt: typeof raw.favoritedAt === 'number' ? raw.favoritedAt : undefined,
   }
   return { ok: true, item }
 }

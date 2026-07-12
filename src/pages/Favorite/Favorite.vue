@@ -20,6 +20,8 @@ interface RecordItem {
   account?: string
   categoryId: string | number
   isFavorite?: boolean
+  createdAt?: number
+  favoritedAt?: number
   rawData?: Array<{ label: string, value: string | number, [key: string]: any }>
 }
 
@@ -30,6 +32,7 @@ const allRecords = ref<RecordItem[]>([])
 const searchQuery = ref('')
 const showDetail = ref(false)
 const activeItem = ref<RecordItem | null>(null)
+const sortOrder = ref<'latest' | 'earliest'>('latest')
 
 function loadFavorites() {
   allRecords.value = getAllRecords()
@@ -51,18 +54,20 @@ onShow(() => {
 const filteredData = computed(() => {
   const favorites = allRecords.value.filter(item => item.isFavorite)
   const keyword = searchQuery.value.toLowerCase().trim()
+  const matched = keyword
+    ? favorites.filter((item) => {
+        const matchName = item.name?.toLowerCase().includes(keyword) ?? false
+        const matchAccount = item.account?.toLowerCase().includes(keyword) ?? false
+        const categoryName = CATEGORY_MAP[String(item.categoryId)]?.name
+        const matchCategory = categoryName?.toLowerCase().includes(keyword) ?? false
+        return matchName || matchAccount || matchCategory
+      })
+    : favorites
 
-  if (!keyword)
-    return favorites
-
-  return favorites.filter((item) => {
-    const matchName = item.name?.toLowerCase().includes(keyword) ?? false
-    const matchAccount = item.account?.toLowerCase().includes(keyword) ?? false
-    const categoryName = CATEGORY_MAP[String(item.categoryId)]?.name
-    const matchCategory = categoryName?.toLowerCase().includes(keyword) ?? false
-
-    return matchName || matchAccount || matchCategory
-  })
+  // 收藏时间:优先 favoritedAt,老数据兜底 createdAt
+  const getTime = (it: RecordItem) => it.favoritedAt ?? it.createdAt ?? 0
+  const dir = sortOrder.value === 'latest' ? -1 : 1
+  return [...matched].sort((a, b) => (getTime(a) - getTime(b)) * dir)
 })
 
 const activeDetailList = computed(() => buildDetailList(activeItem.value))
@@ -103,6 +108,25 @@ async function handleConfirmDelete(item: RecordItem) {
     <SearchBar bg-color="#050508" @search="handleInput" fixed />
 
     <scroll-view class="px-5  box-border pb-safe" scroll-y>
+      <view v-if="filteredData.length > 0" class="flex justify-end pt-3 pb-1">
+        <view class="flex items-center rounded-full bg-white/5 p-0.5">
+          <view
+            class="rounded-full px-3 py-1 text-[11px] transition-all"
+            :class="sortOrder === 'latest' ? 'bg-white/15 text-white' : 'text-gray-500'"
+            @tap="sortOrder = 'latest'"
+          >
+            最新收藏
+          </view>
+          <view
+            class="rounded-full px-3 py-1 text-[11px] transition-all"
+            :class="sortOrder === 'earliest' ? 'bg-white/15 text-white' : 'text-gray-500'"
+            @tap="sortOrder = 'earliest'"
+          >
+            最早收藏
+          </view>
+        </view>
+      </view>
+
       <FavoriteList v-if="filteredData.length > 0" :list="filteredData as any" @click="handleItemCopy"
         @edit="handleItemEdit" @delete="handleConfirmDelete" @refresh="handleRefresh" />
       <EmptyState v-else text="暂无收藏记录" />

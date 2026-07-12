@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import DetailCopySheet from '@/components/DetailCopySheet.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
@@ -15,14 +15,28 @@ import { useVaultStore } from '@/composables/useVaultStore'
 // 状态定义
 const pageTitle = ref('分类列表')
 const categoryId = ref('')
-const accountItems = ref([])
 const allItems = ref([])
 const showDetail = ref(false)
 const activeItem = ref<any>(null)
+const sortOrder = ref<'latest' | 'earliest'>('latest')
+const searchKeyword = ref('')
 
 const { deleteRecord } = useVaultStore()
 
 const activeDetailList = computed(() => buildDetailList(activeItem.value))
+
+// 列表 = 按关键字过滤 + 按 createdAt 排序;编辑不改变 createdAt,因此不会改变位置
+const accountItems = computed(() => {
+  const keyword = searchKeyword.value.toLowerCase().trim()
+  const matched = keyword
+    ? allItems.value.filter((item: any) =>
+        (item.name?.toLowerCase().includes(keyword)) || (item.account?.toLowerCase().includes(keyword)),
+      )
+    : allItems.value
+  const getTime = (it: any) => it.createdAt ?? 0
+  const dir = sortOrder.value === 'latest' ? -1 : 1
+  return [...matched].sort((a, b) => (getTime(a) - getTime(b)) * dir)
+})
 
 onLoad((options: any) => {
   if (options.title)
@@ -42,7 +56,6 @@ function loadData() {
     filtered = list.filter((item: any) => String(item.categoryId) === String(categoryId.value))
   }
   allItems.value = filtered
-  accountItems.value = filtered
 }
 
 function handleEdit() {
@@ -63,15 +76,7 @@ function handleBack() {
 }
 
 function handleInput(value: string) {
-  if (!value) {
-    accountItems.value = allItems.value
-  }
-  else {
-    const keyword = value.toLowerCase()
-    accountItems.value = allItems.value.filter((item: any) =>
-      (item.name?.toLowerCase().includes(keyword)) || (item.account?.toLowerCase().includes(keyword)),
-    )
-  }
+  searchKeyword.value = value
 }
 
 function handleConfirmDelete(item: any) {
@@ -80,7 +85,7 @@ function handleConfirmDelete(item: any) {
     uni.showToast({ title: '删除失败,请重试', icon: 'none' })
     return
   }
-  accountItems.value = accountItems.value.filter((i: any) => i.id !== item.id)
+  allItems.value = allItems.value.filter((i: any) => i.id !== item.id)
   uni.showToast({ title: '删除成功', icon: 'success' })
 }
 
@@ -102,6 +107,25 @@ function handleQuickEdit(item: any) {
     <SearchBar bg-color="#050508" @search="handleInput" fixed />
 
     <scroll-view class="px-5  box-border pb-safe" scroll-y>
+      <view v-if="accountItems.length > 0" class="flex justify-end pt-3 pb-1">
+        <view class="flex items-center rounded-full bg-white/5 p-0.5">
+          <view
+            class="rounded-full px-3 py-1 text-[11px] transition-all"
+            :class="sortOrder === 'latest' ? 'bg-white/15 text-white' : 'text-gray-500'"
+            @tap="sortOrder = 'latest'"
+          >
+            最新新增
+          </view>
+          <view
+            class="rounded-full px-3 py-1 text-[11px] transition-all"
+            :class="sortOrder === 'earliest' ? 'bg-white/15 text-white' : 'text-gray-500'"
+            @tap="sortOrder = 'earliest'"
+          >
+            最早新增
+          </view>
+        </view>
+      </view>
+
       <FavoriteList v-if="accountItems.length > 0" :list="accountItems" @click="handleDetail" @edit="handleQuickEdit"
         @delete="handleConfirmDelete" @refresh="loadData" />
       <EmptyState v-else text="暂无数据记录" />
