@@ -10,7 +10,7 @@ definePage({
 </script>
 
 <template>
-  <view class="px-5">
+  <view class="px-5 pb-safe">
     <Header title="密码生成器" fixed :show-left="false" />
     <PasswordGenerator />
   </view>

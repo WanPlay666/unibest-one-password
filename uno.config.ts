@@ -94,6 +94,9 @@ export default defineConfig({
     'bg-red-500',
     'bg-violet-500',
     'bg-slate-500',
+    // 缓存看板分类色(动态 :class="b.color" 绑定,需 safelist 防 purge)
+    'bg-blue-500',
+    'bg-fuchsia-500',
     // 其它常用图标
     'i-carbon-home',
     'i-carbon-ibm-watson-language-translator',

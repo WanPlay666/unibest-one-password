@@ -8,6 +8,7 @@ import { STORAGE_KEYS } from '@/utils/storageKeys'
 import UserProfile from '@/components/me/UserProfile.vue'
 import NameEditorSheet from '@/components/me/NameEditorSheet.vue'
 import MenuGroup from '@/components/me/MenuGroup.vue'
+import StorageDashboard from '@/components/me/StorageDashboard.vue'
 
 definePage({
   style: { navigationStyle: 'custom' },
@@ -114,10 +115,12 @@ function confirmClearAll() {
 </script>
 
 <template>
-  <view class="min-h-screen bg-[#050508]  text-white ">
+  <view class="min-h-screen bg-[#050508]  text-white pt-safe">
     <UserProfile :name="profile.name" @edit="showNameEditor = true" />
 
-    <view class="flex flex-col gap-8 px-5">
+    <view class="flex flex-col gap-8 px-5 pb-safe">
+      <StorageDashboard />
+
       <MenuGroup v-for="group in menuGroups" :key="group[0].id" :items="group" :biometric-enabled="isBiometricEnabled"
         @action="handleAction" @biometric-change="handleBiometricChange" />
     </view>
