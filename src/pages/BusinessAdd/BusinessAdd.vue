@@ -23,14 +23,7 @@ const {
   fieldMapping: (f) => ({
     account: f.taxId || '',
     nameFallback: f.companyName || '未命名企业',
-  }),
-  extraValidate: () => {
-    if (formData.value.taxId && formData.value.taxId.length < 15) {
-      uni.showToast({ title: '纳税人识别号格式不正确', icon: 'none' })
-      return false
-    }
-    return true
-  },
+  })
 })
 
 provide('formManager', {
@@ -44,7 +37,7 @@ provide('formManager', {
   <view class="bg-[#050508] text-white">
     <Header :title="isEditMode ? '编辑发票信息' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 我的公司)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 我的公司)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.companyName" name="companyName" label="公司全称" required placeholder="请输入营业执照上的全称" />

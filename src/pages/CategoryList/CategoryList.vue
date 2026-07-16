@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onLoad, onShow } from '@dcloudio/uni-app'
-import { ref, computed } from 'vue'
+import { nextTick, ref, computed } from 'vue'
 import DetailCopySheet from '@/components/DetailCopySheet.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
 import Header from '@/components/Header.vue'
 import SearchBar from '@/components/index/SearchBar.vue'
+import Skeleton from '@/components/Skeleton/Skeleton.vue'
+import SortToggle from '@/components/SortToggle.vue'
 import { CATEGORY_ROUTE_MAP } from '@/utils/config'
 import { buildDetailList } from '@/utils/itemDetail'
 import { getSecureStorage } from '@/utils/secureStorage'
@@ -20,6 +22,8 @@ const showDetail = ref(false)
 const activeItem = ref<any>(null)
 const sortOrder = ref<'latest' | 'earliest'>('latest')
 const searchKeyword = ref('')
+const isInitialLoading = ref(true)
+const hasLoaded = ref(false)
 
 const { deleteRecord } = useVaultStore()
 
@@ -30,8 +34,8 @@ const accountItems = computed(() => {
   const keyword = searchKeyword.value.toLowerCase().trim()
   const matched = keyword
     ? allItems.value.filter((item: any) =>
-        (item.name?.toLowerCase().includes(keyword)) || (item.account?.toLowerCase().includes(keyword)),
-      )
+      (item.name?.toLowerCase().includes(keyword)) || (item.account?.toLowerCase().includes(keyword)),
+    )
     : allItems.value
   const getTime = (it: any) => it.createdAt ?? 0
   const dir = sortOrder.value === 'latest' ? -1 : 1
@@ -46,7 +50,16 @@ onLoad((options: any) => {
 })
 
 onShow(() => {
-  loadData()
+  if (hasLoaded.value) {
+    loadData()
+    return
+  }
+  isInitialLoading.value = true
+  nextTick(() => {
+    loadData()
+    isInitialLoading.value = false
+    hasLoaded.value = true
+  })
 })
 
 function loadData() {
@@ -107,27 +120,19 @@ function handleQuickEdit(item: any) {
     <SearchBar bg-color="#050508" @search="handleInput" fixed />
 
     <scroll-view class="px-5  box-border pb-safe" scroll-y>
-      <view v-if="accountItems.length > 0" class="flex justify-end pt-3 pb-1">
-        <view class="flex items-center rounded-full bg-white/5 p-0.5">
-          <view
-            class="rounded-full px-3 py-1 text-[11px] transition-all"
-            :class="sortOrder === 'latest' ? 'bg-white/15 text-white' : 'text-gray-500'"
-            @tap="sortOrder = 'latest'"
-          >
-            最新新增
-          </view>
-          <view
-            class="rounded-full px-3 py-1 text-[11px] transition-all"
-            :class="sortOrder === 'earliest' ? 'bg-white/15 text-white' : 'text-gray-500'"
-            @tap="sortOrder = 'earliest'"
-          >
-            最早新增
-          </view>
-        </view>
+      <view v-if="isInitialLoading" class="pb-1">
+        <Skeleton variant="row" :count="6" />
       </view>
 
-      <FavoriteList v-if="accountItems.length > 0" :list="accountItems" @click="handleDetail" @edit="handleQuickEdit"
-        @delete="handleConfirmDelete" @refresh="loadData" />
+      <view v-else-if="accountItems.length > 0">
+        <view class="flex justify-end pb-1">
+          <SortToggle v-model="sortOrder" />
+        </view>
+
+        <FavoriteList :list="accountItems" @click="handleDetail" @edit="handleQuickEdit" @delete="handleConfirmDelete"
+          @refresh="loadData" />
+      </view>
+
       <EmptyState v-else text="暂无数据记录" />
     </scroll-view>
 

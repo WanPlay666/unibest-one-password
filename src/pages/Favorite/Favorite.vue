@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import { onShow } from '@dcloudio/uni-app'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import DetailCopySheet from '@/components/DetailCopySheet.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FavoriteList from '@/components/FavoriteList/FavoriteList.vue'
 import Header from '@/components/Header.vue'
 import SearchBar from '@/components/index/SearchBar.vue'
+import Skeleton from '@/components/Skeleton/Skeleton.vue'
+import SortToggle from '@/components/SortToggle.vue'
 
 import { useRecordActions } from '@/composables/useRecordActions'
 import { useVaultStore } from '@/composables/useVaultStore'
@@ -25,7 +27,7 @@ interface RecordItem {
   rawData?: Array<{ label: string, value: string | number, [key: string]: any }>
 }
 
-const { copyToClipboard, tryDelete } = useRecordActions()
+const { tryDelete } = useRecordActions()
 const { getAllRecords } = useVaultStore()
 
 const allRecords = ref<RecordItem[]>([])
@@ -33,6 +35,8 @@ const searchQuery = ref('')
 const showDetail = ref(false)
 const activeItem = ref<RecordItem | null>(null)
 const sortOrder = ref<'latest' | 'earliest'>('latest')
+const isInitialLoading = ref(true)
+const hasLoaded = ref(false)
 
 function loadFavorites() {
   allRecords.value = getAllRecords()
@@ -48,7 +52,16 @@ function handleRefresh() {
 }
 
 onShow(() => {
-  loadFavorites()
+  if (hasLoaded.value) {
+    loadFavorites()
+    return
+  }
+  isInitialLoading.value = true
+  nextTick(() => {
+    loadFavorites()
+    isInitialLoading.value = false
+    hasLoaded.value = true
+  })
 })
 
 const filteredData = computed(() => {
@@ -56,12 +69,12 @@ const filteredData = computed(() => {
   const keyword = searchQuery.value.toLowerCase().trim()
   const matched = keyword
     ? favorites.filter((item) => {
-        const matchName = item.name?.toLowerCase().includes(keyword) ?? false
-        const matchAccount = item.account?.toLowerCase().includes(keyword) ?? false
-        const categoryName = CATEGORY_MAP[String(item.categoryId)]?.name
-        const matchCategory = categoryName?.toLowerCase().includes(keyword) ?? false
-        return matchName || matchAccount || matchCategory
-      })
+      const matchName = item.name?.toLowerCase().includes(keyword) ?? false
+      const matchAccount = item.account?.toLowerCase().includes(keyword) ?? false
+      const categoryName = CATEGORY_MAP[String(item.categoryId)]?.name
+      const matchCategory = categoryName?.toLowerCase().includes(keyword) ?? false
+      return matchName || matchAccount || matchCategory
+    })
     : favorites
 
   // 收藏时间:优先 favoritedAt,老数据兜底 createdAt
@@ -76,11 +89,8 @@ function handleInput(val: string) {
   searchQuery.value = val
 }
 
-function handleItemCopy(item: RecordItem) {
+function handleItemClick(item: RecordItem) {
   activeItem.value = item
-  if (item.account) {
-    copyToClipboard(item.account, '账号/卡号')
-  }
   showDetail.value = true
 }
 
@@ -108,28 +118,19 @@ async function handleConfirmDelete(item: RecordItem) {
     <SearchBar bg-color="#050508" @search="handleInput" fixed />
 
     <scroll-view class="px-5  box-border pb-safe" scroll-y>
-      <view v-if="filteredData.length > 0" class="flex justify-end pt-3 pb-1">
-        <view class="flex items-center rounded-full bg-white/5 p-0.5">
-          <view
-            class="rounded-full px-3 py-1 text-[11px] transition-all"
-            :class="sortOrder === 'latest' ? 'bg-white/15 text-white' : 'text-gray-500'"
-            @tap="sortOrder = 'latest'"
-          >
-            最新收藏
-          </view>
-          <view
-            class="rounded-full px-3 py-1 text-[11px] transition-all"
-            :class="sortOrder === 'earliest' ? 'bg-white/15 text-white' : 'text-gray-500'"
-            @tap="sortOrder = 'earliest'"
-          >
-            最早收藏
-          </view>
-        </view>
+      <view v-if="isInitialLoading" class=" pb-1">
+        <Skeleton variant="row" :count="5" />
       </view>
 
-      <FavoriteList v-if="filteredData.length > 0" :list="filteredData as any" @click="handleItemCopy"
-        @edit="handleItemEdit" @delete="handleConfirmDelete" @refresh="handleRefresh" />
-      <EmptyState v-else text="暂无收藏记录" />
+      <template v-else>
+        <view v-if="filteredData.length > 0" class="flex justify-end pb-1">
+          <SortToggle v-model="sortOrder" />
+        </view>
+
+        <FavoriteList v-if="filteredData.length > 0" :list="filteredData as any" @click="handleItemClick"
+          @edit="handleItemEdit" @delete="handleConfirmDelete" @refresh="handleRefresh" />
+        <EmptyState v-else text="暂无收藏记录" />
+      </template>
 
       <DetailCopySheet :show="showDetail" :title="activeItem ? `${activeItem.name} 详情` : '详情'" :data="activeDetailList"
         @close="showDetail = false" />

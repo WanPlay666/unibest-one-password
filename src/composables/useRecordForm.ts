@@ -92,7 +92,8 @@ export function useRecordForm(options: UseRecordFormOptions) {
       const finalRelatedApps = JSON.parse(JSON.stringify(relatedApps.value))
       const rawData = getRawData(fieldRegistry, finalRelatedApps)
       const mapping = fieldMapping(formData.value as Record<string, string>)
-      const name = inputTitle.value.trim() || mapping.nameFallback || schema?.defaultName || '未命名记录'
+      // 记录名称由 RecordNameCard 必填校验保证非空,不再兜底
+      const name = inputTitle.value.trim()
 
       const payload: RecordPayload = {
         categoryId: categoryId.value,

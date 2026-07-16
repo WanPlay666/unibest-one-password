@@ -18,6 +18,7 @@ const {
   isEditMode,
   fieldRegistry,
   inputTitle,
+  relatedApps,
   currentCategory,
   pageTitle,
   handleSave,
@@ -29,14 +30,7 @@ const {
     nameFallback: f.bankName
       ? `${f.bankName} (${(f.cardNumber || '').slice(-4)})`
       : '未命名银行卡',
-  }),
-  extraValidate: () => {
-    if (formData.value.cardNumber && formData.value.cardNumber.length < 12) {
-      uni.showToast({ title: '银行卡号位数不足', icon: 'none' })
-      return false
-    }
-    return true
-  },
+  })
 })
 
 provide('formManager', {
@@ -51,22 +45,18 @@ provide('formManager', {
     <Header :title="isEditMode ? '编辑银行卡' : pageTitle" fixed @back="uni.navigateBack()" />
 
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 招商工资卡)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录别名 (如: 招商工资卡)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.bankName" name="bankName" label="银行名称" required placeholder="如: 招商银行" />
 
         <picker mode="selector" :range="cardTypeOptions" @change="handleTypeChange">
-          <FieldItem
-            v-model="formData.cardType" name="cardType" label="卡片类型" required readonly show-arrow
-            placeholder="请选择卡片类型"
-          />
+          <FieldItem v-model="formData.cardType" name="cardType" label="卡片类型" required readonly show-arrow
+            placeholder="请选择卡片类型" />
         </picker>
 
-        <FieldItem
-          v-model="formData.cardNumber" name="cardNumber" label="卡号" type="tel" required
-          placeholder="请输入银行卡号"
-        />
+        <FieldItem v-model="formData.cardNumber" name="cardNumber" label="卡号" type="tel" required
+          placeholder="请输入银行卡号" />
 
         <FieldItem v-model="formData.holderName" name="holderName" label="持卡人" required is-last placeholder="请输入姓名" />
       </FieldGroup>

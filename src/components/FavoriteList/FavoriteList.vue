@@ -15,7 +15,7 @@ interface Item {
 
 const STORAGE_KEY = STORAGE_KEYS.VAULT
 
-defineProps<{ list: Item[] }>()
+const props = defineProps<{ list: Item[] }>()
 
 const emit = defineEmits<{
   (e: 'click', item: Item): void
@@ -33,7 +33,7 @@ function getVisual(catId: string | number) {
 
 // 给每条 item 一次性算好视觉属性,避免模板里同一 catId 调用两次 getVisual
 const enrichedList = computed(() =>
-  list.map(item => ({ ...item, visual: getVisual(item.categoryId) })),
+  props.list.map(item => ({ ...item, visual: getVisual(item.categoryId) })),
 )
 
 async function toggleFavorite(item: Item) {

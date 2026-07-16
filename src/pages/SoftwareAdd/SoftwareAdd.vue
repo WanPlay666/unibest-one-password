@@ -37,7 +37,7 @@ provide('formManager', {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑授权' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 办公软件)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 办公软件)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.softwareName" name="softwareName" label="软件名称" required placeholder="请输入软件名称" />

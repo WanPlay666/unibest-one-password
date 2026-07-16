@@ -41,7 +41,7 @@ provide('formManager', {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑车辆信息' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 我的爱车)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 我的爱车)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.plateNumber" name="plateNumber" label="车牌号" required placeholder="粤B·XXXXX" />

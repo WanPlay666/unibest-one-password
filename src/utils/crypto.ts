@@ -50,8 +50,6 @@ export function encryptData(data: any, key: string): string {
  * 解密数据
  */
 export function decryptData(ciphertextWithIv: string, key: string): any {
-  console.log('解密使用的 Key:', key)
-  console.log('解密使用的 Key 长度:', key?.length)
   if (!ciphertextWithIv || !key)
     return null
   try {

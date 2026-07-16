@@ -60,8 +60,7 @@ function handleUnlock() {
   <view class="min-h-screen flex flex-col items-center justify-center bg-[#050508] px-8 text-white">
     <view class="mb-12 flex flex-col items-center">
       <view
-        class="mb-6 h-20 w-20 flex items-center justify-center rounded-[24px] from-blue-500 to-indigo-600 bg-gradient-to-br shadow-blue-500/30 shadow-lg"
-      >
+        class="mb-6 h-20 w-20 flex items-center justify-center rounded-[24px] from-blue-500 to-indigo-600 bg-gradient-to-br shadow-blue-500/30 shadow-lg">
         <view class="i-carbon-security text-4xl text-white" />
       </view>
       <text class="mb-2 text-2xl font-bold tracking-wider">密码保险箱</text>
@@ -70,10 +69,8 @@ function handleUnlock() {
 
     <view class="mb-8 w-full">
       <FieldGroup>
-        <FieldItem
-          v-model="password" label="主密码" type="password" placeholder="请输入主密码" :show-copy="false"
-          :is-last="true"
-        />
+        <FieldItem v-model="password" label="主密码" type="password" placeholder="请输入主密码" :show-copy="false"
+          :is-last="true" />
       </FieldGroup>
       <view class="mt-2 h-6 flex justify-center">
         <text v-if="isError" class="animate-pulse text-xs text-red-500">密码错误，请重试</text>
@@ -81,9 +78,8 @@ function handleUnlock() {
     </view>
 
     <button
-      class="mb-6 w-full flex items-center justify-center rounded-[18px] border-none bg-blue-600 py-4 text-[16px] text-white font-bold shadow-blue-900/20 shadow-xl transition-transform active:scale-[0.97]"
-      @click="handleUnlock"
-    >
+      class="w-full flex items-center justify-center rounded-[18px] border-none bg-blue-600 py-2 text-[10px] text-white font-bold shadow-blue-900/20 shadow-xl transition-transform active:scale-[0.97]"
+      @click="handleUnlock">
       解 锁
     </button>
   </view>

@@ -24,14 +24,21 @@ function preventTouchMove(e: any) {
 
 /**
  * 处理复制逻辑
+ *  - 300ms 节流,防止快速重复点击触发两次 setClipboardData
+ *  - toast 文字带 label,与 iOS 微信内置"已复制"系统提示区分开
  */
+let copyDebounce: ReturnType<typeof setTimeout> | null = null
 function handleCopy(item: DetailItem) {
+  if (copyDebounce)
+    return
+  copyDebounce = setTimeout(() => { copyDebounce = null }, 300)
+
   if (!item.value)
     return
   uni.setClipboardData({
     data: item.value,
     success: () => {
-      uni.showToast({ title: '已复制', icon: 'none' })
+      uni.showToast({ title: `${item.label}已复制`, icon: 'none' })
     },
   })
 }

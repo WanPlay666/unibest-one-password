@@ -52,7 +52,7 @@ provide('formManager', {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑记录' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" :required="true" />
       <view class="mt-6">
         <FieldGroup>
           <picker mode="selector" :range="idTypeOptions" @change="handleTypeChange">

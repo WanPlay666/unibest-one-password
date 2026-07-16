@@ -38,7 +38,7 @@ provide('formManager', {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑 Wi-Fi' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 家里宽带)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 家里宽带)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.ssid" name="ssid" label="网络名称" required placeholder="请输入 Wi-Fi 名称" />

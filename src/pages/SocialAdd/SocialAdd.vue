@@ -38,7 +38,7 @@ provide('formManager', {
   <view class="min-h-screen bg-[#050508] text-white pt-safe">
     <Header :title="isEditMode ? '编辑社交账号' : pageTitle" fixed @back="uni.navigateBack()" />
     <view class="px-5 py-4">
-      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 私人微信)" />
+      <RecordNameCard v-model="inputTitle" :icon="currentCategory.icon" placeholder="记录名称 (如: 私人微信)" :required="true" />
 
       <FieldGroup>
         <FieldItem v-model="formData.platform" name="platform" label="平台" required placeholder="如: 微信" />
